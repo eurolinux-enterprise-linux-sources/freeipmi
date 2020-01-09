@@ -2,7 +2,7 @@
 # Copyright (c) 2003-2013 FreeIPMI Core Team
 #
 
-Release: 7%{?dist}
+Release: 10%{?dist}
 
 Name: freeipmi
 Version: 1.2.1
@@ -15,6 +15,10 @@ Source2: freeipmi-modalias.conf
 Patch1: freeipmi-1.2.1-bigendauth.patch
 Patch2: freeipmi-1.2.1-revshortopt.patch
 Patch3: freeipmi-1.2.1-loop-on-select.patch
+Patch4: 0004-Check-record-counts-against-array-length-increase-MA.patch
+Patch5: 0005-Increase-max-record-ids-in-sensor-tools-to-4096.patch
+Patch6: 0006-Fix-dereference-error.patch
+Patch7: 0007-do-not-exit-on-data-not-available-errors-for-get-wat.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: libgcrypt-devel texinfo
 Requires: module-init-tools
@@ -68,6 +72,10 @@ provide data for a number of IPMI detection tools and features.
 %patch1 -p1 -b .bigendauth
 %patch2 -p0 -b .revshortopt
 %patch3 -p1 -b .looponselect
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
+%patch7 -p1
 
 %build
 export CFLAGS="-D_GNU_SOURCE $RPM_OPT_FLAGS"
@@ -362,6 +370,19 @@ fi
 %{_mandir}/man8/ipmidetectd.8*
 
 %changelog
+* Fri Oct 07 2016 Boris Ranto <branto@redhat.com> - 0:1.2.1-10
+- New release (0:1.2.1-10)
+- do not exit on data not available errors for get watchdog
+
+* Tue Oct 04 2016 Boris Ranto <branto@redhat.com> - 0:1.2.1-9
+- New release (0:1.2.1-9)
+- Fix dereference error
+
+* Tue Oct 04 2016 Boris Ranto <branto@redhat.com> - 0:1.2.1-8
+- New release (0:1.2.1-8)
+- Check record counts against array length
+- Increase max record ids in sensor tools to 4096
+
 * Thu Dec 03 2015 Boris Ranto <branto@redhat.com. - 1.2.1-7
 - Loop on select syscalls (rhbz#1197096)
 

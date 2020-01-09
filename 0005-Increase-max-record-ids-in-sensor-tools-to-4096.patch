@@ -1,0 +1,25 @@
+From 34a3d117e32a938ff654005f6fd26dd29d872bc1 Mon Sep 17 00:00:00 2001
+From: Albert Chu <chu11@llnl.gov>
+Date: Mon, 1 Aug 2016 10:27:38 -0700
+Subject: [PATCH] Increase max record ids in sensor tools to 4096
+
+---
+ common/toolcommon/tool-sensor-common.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/toolcommon/tool-sensor-common.h b/common/toolcommon/tool-sensor-common.h
+index cb43e37..65fe08c 100644
+--- a/common/toolcommon/tool-sensor-common.h
++++ b/common/toolcommon/tool-sensor-common.h
+@@ -55,7 +55,7 @@
+ #define MAX_SENSOR_TYPES                    256
+ #else  /* !0 */
+ /* achu: pick more reasonable limits than the theoretical maxes */
+-#define MAX_SENSOR_RECORD_IDS               1024
++#define MAX_SENSOR_RECORD_IDS               4096
+ #define MAX_SENSOR_TYPES                    64
+ #endif	/* !0 */
+ #endif /* !__CYGWIN__ */
+-- 
+2.7.4
+

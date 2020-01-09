@@ -1,0 +1,79 @@
+From 537c56851251fb84a55af2d294beccfa2cbee21a Mon Sep 17 00:00:00 2001
+From: chu11 <chu11@f7bdd6f0-feb3-4745-876d-a5d75e847258>
+Date: Thu, 19 Dec 2013 18:41:38 +0000
+Subject: [PATCH] Check record counts against array length ; increase
+ MAX_SENSOR_RECORD_IDS to 1024
+
+---
+ common/toolcommon/tool-sensor-common.h |  2 +-
+ ipmi-sensors/ipmi-sensors.c            | 27 +++++++++++++++++++++++++++
+ 2 files changed, 28 insertions(+), 1 deletion(-)
+
+diff --git a/common/toolcommon/tool-sensor-common.h b/common/toolcommon/tool-sensor-common.h
+index a7da14d..cb43e37 100644
+--- a/common/toolcommon/tool-sensor-common.h
++++ b/common/toolcommon/tool-sensor-common.h
+@@ -55,7 +55,7 @@
+ #define MAX_SENSOR_TYPES                    256
+ #else  /* !0 */
+ /* achu: pick more reasonable limits than the theoretical maxes */
+-#define MAX_SENSOR_RECORD_IDS               512
++#define MAX_SENSOR_RECORD_IDS               1024
+ #define MAX_SENSOR_TYPES                    64
+ #endif	/* !0 */
+ #endif /* !__CYGWIN__ */
+diff --git a/ipmi-sensors/ipmi-sensors.c b/ipmi-sensors/ipmi-sensors.c
+index 571e73a..2f0df3f 100644
+--- a/ipmi-sensors/ipmi-sensors.c
++++ b/ipmi-sensors/ipmi-sensors.c
+@@ -499,6 +499,15 @@ _calculate_record_ids (ipmi_sensors_state_data_t *state_data,
+           
+           output_record_ids[(*output_record_ids_length)] = record_id;
+           (*output_record_ids_length)++;
++
++	  if (output_record_ids_length >= MAX_SENSOR_RECORD_IDS)
++	    {
++	      pstdout_fprintf (state_data->pstate,
++			       stderr,
++			       "Too many sensors found on system; limit is %u\n",
++			       MAX_SENSOR_RECORD_IDS);
++	      return (-1);
++	    }
+         }
+     }
+   else if (state_data->prog_data->args->record_ids_length)
+@@ -557,6 +566,15 @@ _calculate_record_ids (ipmi_sensors_state_data_t *state_data,
+           
+           output_record_ids[(*output_record_ids_length)] = state_data->prog_data->args->record_ids[i];
+           (*output_record_ids_length)++;
++
++	  if (output_record_ids_length >= MAX_SENSOR_RECORD_IDS)
++	    {
++	      pstdout_fprintf (state_data->pstate,
++			       stderr,
++			       "Too many sensors specified; limit is %u\n",
++			       MAX_SENSOR_RECORD_IDS);
++	      return (-1);
++	    }
+         }
+     }
+   else /* state_data->prog_data->args->sensor_types_length */
+@@ -618,6 +636,15 @@ _calculate_record_ids (ipmi_sensors_state_data_t *state_data,
+           
+           output_record_ids[(*output_record_ids_length)] = record_id;
+           (*output_record_ids_length)++;
++	  
++	  if (output_record_ids_length >= MAX_SENSOR_RECORD_IDS)
++	    {
++	      pstdout_fprintf (state_data->pstate,
++			       stderr,
++			       "Too many sensors found on system; limit is %u\n",
++			       MAX_SENSOR_RECORD_IDS);
++	      return (-1);
++	    }
+         }
+     }
+ 
+-- 
+2.7.4
+
