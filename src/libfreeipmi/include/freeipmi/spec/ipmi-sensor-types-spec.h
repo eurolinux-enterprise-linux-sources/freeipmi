@@ -1,31 +1,31 @@
-/* 
-   Copyright (C) 2003-2008 FreeIPMI Core Team
+/*
+ * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA.  
-*/
-
-#ifndef _IPMI_SENSOR_TYPES_SPEC_H
-#define _IPMI_SENSOR_TYPES_SPEC_H
+#ifndef IPMI_SENSOR_TYPES_SPEC_H
+#define IPMI_SENSOR_TYPES_SPEC_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define IPMI_SENSOR_TYPE_RESERVED                            0x00 
-#define IPMI_SENSOR_TYPE_TEMPERATURE                         0x01 
-#define IPMI_SENSOR_TYPE_VOLTAGE                             0x02 
+#define IPMI_SENSOR_TYPE_RESERVED                            0x00
+#define IPMI_SENSOR_TYPE_TEMPERATURE                         0x01
+#define IPMI_SENSOR_TYPE_VOLTAGE                             0x02
 #define IPMI_SENSOR_TYPE_CURRENT                             0x03
 #define IPMI_SENSOR_TYPE_FAN                                 0x04
 #define IPMI_SENSOR_TYPE_PHYSICAL_SECURITY                   0x05
@@ -68,15 +68,18 @@ extern "C" {
 #define IPMI_SENSOR_TYPE_SESSION_AUDIT                       0x2A
 #define IPMI_SENSOR_TYPE_VERSION_CHANGE                      0x2B
 #define IPMI_SENSOR_TYPE_FRU_STATE                           0x2C
+#define IPMI_SENSOR_TYPE_OEM_MIN                             0xC0
+#define IPMI_SENSOR_TYPE_OEM_MAX                             0xFF
 
-#define IPMI_SENSOR_TYPE_VALID(__sensor_type) \
-        (((__sensor_type) >= IPMI_SENSOR_TYPE_RESERVED \
-          && (__sensor_type) <= IPMI_SENSOR_TYPE_FRU_STATE) ? 1 : 0)
+/* To avoid gcc warnings, add +1 in comparison */
+#define IPMI_SENSOR_TYPE_VALID(__sensor_type)              \
+  ((((__sensor_type) + 1) >= (IPMI_SENSOR_TYPE_RESERVED + 1)    \
+    && (__sensor_type) <= IPMI_SENSOR_TYPE_FRU_STATE) ? 1 : 0)
 
-/* "== 0xFF" to remove warnings */
+/* To avoid gcc warnings, subtract -1 in comparison */
 #define IPMI_SENSOR_TYPE_IS_OEM(__sensor_type) \
-        (((__sensor_type) >= 0xC0 \
-          && ((__sensor_type) <= 0xFE || (__sensor_type) == 0xFF)) ? 1 : 0)
+  (((__sensor_type) >= IPMI_SENSOR_TYPE_OEM_MIN \
+    && (((__sensor_type) - 1) <= (IPMI_SENSOR_TYPE_OEM_MAX - 1))) ? 1 : 0)
 
 extern const char *const ipmi_sensor_types[];
 extern const char *const ipmi_oem_sensor_type;
@@ -85,4 +88,4 @@ extern const char *const ipmi_oem_sensor_type;
 }
 #endif
 
-#endif
+#endif /* IPMI_SENSOR_TYPES_SPEC_H */

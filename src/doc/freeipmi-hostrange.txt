@@ -8,17 +8,17 @@ chu11@llnl.gov
 1) Introduction with Pdsh
 -------------------------
 
-Much of the hostrange input/output in FreeIPMI is based on the tool
-pdsh (http://pdsh.sourceforge.net).  Pdsh is a parallel shell utility
-which allows you to execute an arbitrary command across a cluster.
-Algorithmically, pdsh creates a sliding window of threads, each which
-generates a remote shell using an underlying 'rcmd" functionality
-(such as rcmd(3) or ssh(1)).  As threads complete, the new threads
-launch the command on other hosts until the command has been executed
-on all hosts specified.
+Much of the hostrange input/output in FreeIPMI is modeled off the
+input/output in the tool pdsh (http://pdsh.sourceforge.net).  Pdsh is
+a parallel shell utility which allows you to execute an arbitrary
+command across a cluster.  Algorithmically, pdsh creates a sliding
+window of threads, each which generates a remote shell using an
+underlying 'rcmd" functionality (such as rcmd(3) or ssh(1)).  As
+threads complete, the new threads launch the command on other hosts
+until the command has been executed on all hosts specified.
 
 It is utilized at Lawrence Livermore National Laboratory (LLNL) on
-clusters ranging from 4 to 1152 nodes.  Commands are capable of being
+clusters ranging from 4 to 2000 nodes.  Commands are capable of being
 executed across the entire cluster in the matter of seconds rather
 then minutes it would take to execute serially in a shell prompt.
 
@@ -37,12 +37,12 @@ useful or interesting.  However, perhaps you want to determine if
 every node of your cluster booted with the same kernel.
 
 > pdsh -w "wopr[0-5]" uname -r
-wopr1: 2.6.9-65chaos
-wopr0: 2.6.9-65chaos
-wopr5: 2.6.9-65chaos
-wopr2: 2.6.9-65chaos
-wopr4: 2.6.9-65chaos
-wopr3: 2.6.9-65chaos
+wopr1: 2.6.9-65
+wopr0: 2.6.9-65
+wopr5: 2.6.9-65
+wopr2: 2.6.9-65
+wopr4: 2.6.9-65
+wopr3: 2.6.9-65
 
 Seems pretty useful. However, on larger clusters, this type of output
 will get pretty large, especially if the command generates greater
@@ -179,7 +179,7 @@ sys     0m0.012s
 
 The time differences may not seem like much difference in these
 examples.  But think of when this is done across an extremeley large
-cluster.
+cluster (i.e. thousands of nodes).
 
 2) Hostrange input/output in FreeIPMI
 -------------------------------------
@@ -190,15 +190,12 @@ the remote node.  This can disrupt the CPU of running jobs on the
 cluster and removes the advantage that IPMI over LAN does not
 interrupt a CPU.
 
-Starting with FreeIPMI 0.4.1, hostrange support has been added into
-ipmi-chassis, ipmi-fru, ipmi-raw, ipmi-sensors, ipmi-sel, bmc-info,
-and ipmimonitoring (it has existed in ipmipower since 0.1.0.  In later
-releases it has been extended to other tools).  More than one node at
-a time can be specified on the command line using the hostrange format
-similar in pdsh.  Using a threaded model similar to pdsh, each of the
-tools will create a sliding-window of threads, each executing
-out-of-band IPMI in parallel.  The number of threads in the window can
-be increased or decreased using the fanout -F option.
+Hostrange support has been added into most FreeIPMI tools.  More than
+one node at a time can be specified on the command line using the
+hostrange format similar in pdsh.  Using a threaded model similar to
+pdsh, each of the tools will create a sliding-window of threads, each
+executing out-of-band IPMI in parallel.  The number of threads in the
+window can be increased or decreased using the fanout -F option.
 
 The tools now have similar functionality to pdsh, but all of the IPMI
 communication is done out-of-band.  Ipmipower, which supported
@@ -211,69 +208,61 @@ out our local usernames and passwords of course :-)
 
 For example:
 
-> ipmi-sensors -h "pwopr[0-5]" -u XXX -p YYY -s 10
-pwopr0: 10: CPU3 Vcore (Voltage): 1.31 V (1.04/1.65): [OK]
-pwopr5: 10: CPU3 Vcore (Voltage): 1.25 V (1.04/1.65): [OK]
-pwopr1: 10: CPU3 Vcore (Voltage): 1.23 V (1.04/1.65): [OK]
-pwopr3: 10: CPU2 Vcore (Voltage): 1.26 V (1.06/1.63): [OK]
-pwopr2: 10: CPU2 Vcore (Voltage): 1.32 V (1.06/1.63): [OK]
-pwopr4: 10: CPU2 Vcore (Voltage): 1.26 V (1.06/1.63): [OK]
+> ipmi-sensors -h "pwopr[0-5]" -u XXX -p YYY --record-ids=10
+pwopr0: 10 | CPU3 Vcore | Voltage | 1.31       | V     | 'OK'
+pwopr5: 10 | CPU3 Vcore | Voltage | 1.25       | V     | 'OK'
+pwopr1: 10 | CPU3 Vcore | Voltage | 1.23       | V     | 'OK'
+pwopr3: 10 | CPU3 Vcore | Voltage | 1.26       | V     | 'OK'
+pwopr2: 10 | CPU3 Vcore | Voltage | 1.32       | V     | 'OK'
+pwopr4: 10 | CPU3 Vcore | Voltage | 1.26       | V     | 'OK'
 
 Dshback functionality has been added with the -B (--buffered) and -C
 (--consolidated) options.
 
-> bmc-info -h "pwopr[0-5]" -u XXX -p YYY -B
+> bmc-info -h "pwopr[0-5]" -u XXX -p YYY --get-device-id -B
 ----------------
 pwopr5
 ----------------
-Device ID:         22
-Device Revision:   1
-Firmware Revision: 1.12
-                   [Device Available (normal operation)]
-IPMI Version:      2.0
-Additional Device Support:
-                   [Sensor Device]
-                   [SDR Repository Device]
-                   [SEL Device]
-                   [FRU Inventory Device]
-                   [Chassis Device]
-Manufacturer ID:   28C5h
-Product ID:        4h
-Aux Firmware Revision Info: 38420000h
-Channel Information:
-       Channel No: 1
-      Medium Type: 802.3 LAN
-    Protocol Type: IPMB-1.0
-       Channel No: 5
-      Medium Type: Asynch. Serial/Modem (RS-232)
-    Protocol Type: IPMB-1.0
+Device ID             : 34
+Device Revision       : 1
+Device SDRs           : unsupported
+Firmware Revision     : 1.0c
+Device Available      : yes (normal operation)
+IPMI Version          : 2.0
+Sensor Device         : supported
+SDR Repository Device : supported
+SEL Device            : supported
+FRU Inventory Device  : supported
+IPMB Event Receiver   : unsupported
+IPMB Event Generator  : unsupported
+Bridge                : unsupported
+Chassis Device        : supported
+Manufacturer ID       : Peppercon AG (10437)
+Product ID            : 4
+Auxiliary Firmware Revision Information : 38420000h
 <snip - there's a lot more of the same stuff>
 
-> bmc-info -h "pwopr[0-5]" -u XXX -p YYY -C
+> bmc-info -h "pwopr[0-5]" -u XXX -p YYY --get-device-id -C
 ----------------
 pwopr[0-1,5]
 ----------------
-Device ID:         22
-Device Revision:   1
-Firmware Revision: 1.12
-                   [Device Available (normal operation)]
-IPMI Version:      2.0
-Additional Device Support:
-                   [Sensor Device]
-                   [SDR Repository Device]
-                   [SEL Device]
-                   [FRU Inventory Device]
-                   [Chassis Device]
-Manufacturer ID:   28C5h
-Product ID:        4h
-Aux Firmware Revision Info: 38420000h
-Channel Information:
-       Channel No: 1
-      Medium Type: 802.3 LAN
-    Protocol Type: IPMB-1.0
-       Channel No: 5
-      Medium Type: Asynch. Serial/Modem (RS-232)
-    Protocol Type: IPMB-1.0
+Device ID             : 34
+Device Revision       : 1
+Device SDRs           : unsupported
+Firmware Revision     : 1.0c
+Device Available      : yes (normal operation)
+IPMI Version          : 2.0
+Sensor Device         : supported
+SDR Repository Device : supported
+SEL Device            : supported
+FRU Inventory Device  : supported
+IPMB Event Receiver   : unsupported
+IPMB Event Generator  : unsupported
+Bridge                : unsupported
+Chassis Device        : supported
+Manufacturer ID       : Peppercon AG (10437)
+Product ID            : 4
+Auxiliary Firmware Revision Information : 38420000h
 <snip - different firmware for pwopr[2-4]>
 
 If you have happened to install pdsh on your system, you may use
@@ -288,7 +277,7 @@ and configured on the client (see ipmidetectd(8) and
 ipmidetectd.conf(5) for more information).  The ipmidetectd daemon
 regularly ipmipings remote nodes.  The ipmidetect tool and library
 will determine detected vs. undetected ipmi systems based on the most
-recent ipmipings received.
+recent ipmipings received. [1]
 
 > /usr/sbin/ipmidetect
 detected:   6: pwopr[0-5]
@@ -296,28 +285,28 @@ undetected: 1: pwopr6
 
 For example, we re-introduce the bad 'pwopr6' node into the hostrange:
 
-> time ipmi-sensors -h "pwopr[0-6]" -u XXX -p YYY -s 10
-pwopr5: 10: CPU3 Vcore (Voltage): 1.25 V (1.04/1.65): [OK]
-pwopr4: 10: CPU2 Vcore (Voltage): 1.26 V (1.06/1.63): [OK]
-pwopr0: 10: CPU3 Vcore (Voltage): 1.31 V (1.04/1.65): [OK]
-pwopr3: 10: CPU2 Vcore (Voltage): 1.26 V (1.06/1.63): [OK]
-pwopr2: 10: CPU2 Vcore (Voltage): 1.32 V (1.06/1.63): [OK]
-pwopr1: 10: CPU3 Vcore (Voltage): 1.23 V (1.04/1.65): [OK]
-pwopr6: ipmi_open_outofband(): Connection timed out
+> time ipmi-sensors -h "pwopr[0-6]" -u XXX -p YYY --record-ids=10
+pwopr5: 10 | CPU3 Vcore | Voltage | 1.25       | V     | 'OK'
+pwopr4: 10 | CPU3 Vcore | Voltage | 1.26       | V     | 'OK'
+pwopr0: 10 | CPU3 Vcore | Voltage | 1.31       | V     | 'OK'
+pwopr3: 10 | CPU3 Vcore | Voltage | 1.26       | V     | 'OK'
+pwopr2: 10 | CPU3 Vcore | Voltage | 1.32       | V     | 'OK'
+pwopr1: 10 | CPU3 Vcore | Voltage | 1.23       | V     | 'OK'
+pwopr6: ipmi_ctx_open_outofband(): Connection timed out
 real    0m25.000s
 user    0m0.029s
 sys     0m0.003s
 
 Running with the -E option (and assuming ipmidetectd has been setup
-and is running) the -E option equickly eliminates pwopr6.
+and is running) the -E option quickly eliminates pwopr6.
 
-> time ipmi-sensors -h "pwopr[0-6]" -u XXX -p YYY -s 10 -E
-pwopr0: 10: CPU3 Vcore (Voltage): 1.31 V (1.04/1.65): [OK]
-pwopr2: 10: CPU2 Vcore (Voltage): 1.32 V (1.06/1.63): [OK]
-pwopr1: 10: CPU3 Vcore (Voltage): 1.23 V (1.04/1.65): [OK]
-pwopr4: 10: CPU2 Vcore (Voltage): 1.26 V (1.06/1.63): [OK]
-pwopr5: 10: CPU3 Vcore (Voltage): 1.25 V (1.04/1.65): [OK]
-pwopr3: 10: CPU2 Vcore (Voltage): 1.26 V (1.06/1.63): [OK]
+> time ipmi-sensors -h "pwopr[0-6]" -u XXX -p YYY --record-ids=10 -E
+pwopr0: 10 | CPU3 Vcore | Voltage | 1.31       | V     | 'OK'
+pwopr2: 10 | CPU3 Vcore | Voltage | 1.32       | V     | 'OK'
+pwopr1: 10 | CPU3 Vcore | Voltage | 1.23       | V     | 'OK'
+pwopr4: 10 | CPU3 Vcore | Voltage | 1.26       | V     | 'OK'
+pwopr5: 10 | CPU3 Vcore | Voltage | 1.25       | V     | 'OK'
+pwopr3: 10 | CPU3 Vcore | Voltage | 1.26       | V     | 'OK'
 
 real    0m0.113s
 user    0m0.030s
@@ -337,12 +326,44 @@ dependending with the tool.  The following are some suggestions.  They
 are the ways the author thinks most will use the hostrange
 input/output.
 
-bmc-info:
+ipmi-sensors:
 
-When using hostranges, you are probably trying to verify the firmware
-version or hardware type for each BMC in your cluster.  You probably
-want to run bmc-info with the consolidated output (-C) set most of the
-time.
+Each node of the cluster will likely have slightly different
+temperatures, voltages, etc.  Therefore you may wish to run
+ipmi-sensors with the -q option to make it easier to consolidate
+output.
+
+> ipmi-sensors -h "pwopr[0-6]" -u XXX -p YYY -g temperature -E -C -q
+----------------
+pwopr[0-2,4-5]
+----------------
+4  | CPU1 Temp | Temperature | 'OK'
+5  | CPU2 Temp | Temperature | 'OK'
+6  | CPU3 Temp | Temperature | 'OK'
+7  | CPU4 Temp | Temperature | 'OK'
+8  | Sys Temp  | Temperature | 'OK'
+----------------
+pwopr3
+----------------
+4  | CPU1 Temp | Temperature | 'OK'
+5  | CPU2 Temp | Temperature | 'OK'
+6  | CPU3 Temp | Temperature | 'OK'
+7  | CPU4 Temp | Temperature | 'OK'
+8  | Sys Temp  | Temperature | 'At or Below (<=) Lower Non-Recoverable Threshold'
+
+Based on what you see, you can of course dig deeper on those
+individual nodes.  I imagine many users will want to run ipmi-sensors
+with the default output (each line of output is prepended with
+"hostname: ").  In this mode, key error messages and the node it came
+from can be easily monitored along w/ grep and awk in scripts.
+
+The --no-header-output and --ignore-not-available-sensors options may
+be useful for reducing output across a lot of nodes.  The
+--sdr-cache-recreate option may be useful to gracefully handle errors.
+
+Users may wish to use the --output-sensor-state option w/ ipmi-sensors
+to also output the current sensor state.  This option will output
+NOMINAL, WARNING, and CRITICAL states which allow for easy grepping.
 
 ipmi-sel:
 
@@ -356,68 +377,35 @@ looking for or pipe it into a log monitoring utility.
 The hostrange functionality is also very useful to quickly clear the
 SEL logs across the entire cluster.
 
+The --no-header-output option may be useful for reducing output across
+a lot of nodes.  The --sdr-cache-recreate option may be useful to
+gracefully handle errors.
+
+Users may wish to use the --output-event-state option w/ ipmi-sel to
+also output the current sensor state.  This option will output
+NOMINAL, WARNING, and CRITICAL states which allow for easy grepping.
+
+bmc-info:
+
+When using hostranges, you are probably trying to verify the firmware
+version or hardware type for each BMC in your cluster.  You probably
+want to run bmc-info with the consolidated output (-C) set most of the
+time.  System GUIDs are also different between systems, so in order to
+limit the amount of different output, you may want to run with the
+--get-device-id option to limit the output.
+
 ipmi-raw:
 
 The output of ipmi-raw will likely be only 1 long line.  The
 consolidated output is likely what you're interested in using.
 
-ipmi-sensors:
-
-Each node of the cluster will likely have slightly different
-temperatures, voltages, etc.  Therefore you may wish to run
-ipmi-sensors with the -q option to make it easier to consolidate
-output.
-
-> ipmi-sensors -h "pwopr[0-6]" -u XXX -p YYY -g temperature -E -C -q
-----------------
-pwopr[2-3]
-----------------
-4: CPU1 Temp: [OK]
-5: CPU2 Temp: [OK]
-6: CPU3 Temp: [OK]
-7: CPU4 Temp: [OK]
-8: Sys Temp: [OK]
-----------------
-pwopr[0-1,4-5]
-----------------
-3: CPU1 Temp: [OK]
-4: CPU2 Temp: [OK]
-5: CPU3 Temp: [OK]
-6: CPU4 Temp: [OK]
-7: Sys Temp: [OK]
-
-(Note: the firmware on this particular cluster is not-consistent
-across it, leading to the different sensor record ids in the above.)
-
-Based on what you see, you can of course dig deeper on those
-individual nodes.  I imagine many users will want to run ipmi-sensors
-with the default output (each line of output is prepended with
-"hostname: ").  In this mode, key error messages and the node it came
-from can be easily monitored along w/ grep and awk in scripts.
-
-ipmimonitoring:
-
-Ipmimonitoring interprets sensor readings into NOMINAL, WARNING, and
-CRITICAL states.  It performs similar functionality of ipmi-sensors,
-but gives you a somewhat fixed set of strings to more easily grep.
-This allows you to use hostranged input/output with Ipmimonitoring to
-quickly monitor your cluster out-of-band.
-
-The -q option will also allow you suppress sensor readings to make
-things easier for consolidating the output.
-
-I imagine many users will want to run ipmimonitoring with the default
-output (each line of output is prepended with "hostname: ").  In this
-mode, you can easily grep for "Warning" and "Critical" and determine
-which nodes have problems via scripts.
-
-bmc-config/pef-config/ipmi-sensors-config/ipmi-chassis-config:
+bmc-config/ipmi-chassis-config/ipmi-pef-config/ipmi-sensors-config:
 
 The typical use of one of the above config tools is to run w/
 --checkout to checkout a configuration, modify that file with new
 configuration information, then run w/ --commit to write the new
 configuration.  I imagine most users will only run with hostrange
-support with the --commit option to configuration multiple machines in
+support with the --commit option to configure multiple machines in
 parallel.  Note that since a significant amount of configuration must
 be done in-band before out-of-band communication can occur
 (i.e. configuring IP addresses, MAC addresses), most may elect to not
@@ -443,3 +431,10 @@ Powerman, so it cannot use the parallel stdout libraries developed.
 It instead emulates the --buffer-output, --consolidate-output, and
 --fanout functionality of the other tools.
 
+Additional Notes
+----------------
+
+[1] Why doesn't FreeIPMI just use whatsup?  Whatsup defines "up" to
+typically mean that an OS up running healthily.  IPMI can operate
+without the OS running, even when the node is "powered off."
+Therefore, an alternate tool had to be developed.

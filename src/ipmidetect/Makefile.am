@@ -1,28 +1,43 @@
-SUBDIRS = src
+##*****************************************************************************
+## $Id: Makefile.am,v 1.11 2008-09-17 22:56:04 chu11 Exp $
+##*****************************************************************************
+## Process this file with automake to produce Makefile.in.
+##*****************************************************************************
 
-MANS_CPP = \
-	ipmidetect.8 \
-	ipmidetect.conf.5 \
-	ipmidetectd.8 \
-	ipmidetectd.conf.5 \
-	libipmidetect.3
+sbin_PROGRAMS = ipmidetect
 
-$(MANS_CPP): $(MANS_CPP:%=%.pre)
-	$(CPP) -C -P -I. $@.pre  $@
+ipmidetect_CPPFLAGS = \
+	-I$(top_srcdir)/common/miscutil \
+	-I$(top_srcdir)/common/portability \
+	-I$(top_builddir)/libipmidetect/ \
+	-D_GNU_SOURCE \
+	-D_REENTRANT
 
-dist_man_MANS = $(MANS_CPP)
+ipmidetect_LDADD = \
+	$(top_builddir)/common/miscutil/libmiscutil.la \
+	$(top_builddir)/common/portability/libportability.la \
+	$(top_builddir)/libipmidetect/libipmidetect.la
 
-CLEANFILES = $(MANS_CPP) *~
+ipmidetect_SOURCES = \
+	ipmidetect.c \
+	ipmidetect_.h \
+	ipmidetect-argp.c \
+	ipmidetect-argp.h
 
-DISTCLEANFILES = $(MANS_CPP) $(MANS_CPP:%=%.pre) .deps/*.P
+$(top_builddir)/common/miscutil/libmiscutil.la : force-dependency-check
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
-EXTRA_DIST = freeipmi-ipmidetectd.init
+$(top_builddir)/common/portability/libportability.la : force-dependency-check
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
-install-data-local: $(INSTALL_INIT_SCRIPTS)
+$(top_builddir)/libipmidetect/libipmidetect.la : force-dependency-check
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
-install-init-scripts:
-	$(INSTALL) -m 755 -d $(DESTDIR)$(sysconfdir)/init.d
-	$(INSTALL) -m 755 $(srcdir)/freeipmi-ipmidetectd.init $(DESTDIR)$(sysconfdir)/init.d/freeipmi-ipmidetectd
+force-dependency-check:
 
-uninstall-local:
-	$(RM) -f $(DESTDIR)$(sysconfdir)/init.d/freeipmi-ipmidetectd
+install-exec-hook:
+	$(install_sh) -d -m 755 $(DESTDIR)$(sbindir)
+	$(LN_S) -f $(sbindir)/ipmidetect $(DESTDIR)$(sbindir)/ipmi-detect
+
+uninstall-hook:
+	$(RM) $(DESTDIR)$(sbindir)/ipmi-detect

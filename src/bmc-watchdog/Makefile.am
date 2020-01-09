@@ -1,41 +1,42 @@
-SUBDIRS = src
+sbin_PROGRAMS = bmc-watchdog
 
-MANS_CPP = bmc-watchdog.8
+bmc_watchdog_CPPFLAGS = \
+	-I$(top_srcdir)/common/toolcommon \
+	-I$(top_srcdir)/common/miscutil \
+	-I$(top_srcdir)/common/parsecommon \
+	-I$(top_srcdir)/common/portability \
+	-I$(top_builddir)/libfreeipmi/include \
+	-I$(top_srcdir)/libfreeipmi/include \
+	-D_GNU_SOURCE \
+	-D_REENTRANT \
+	-DBMC_WATCHDOG_LOCALSTATEDIR='"$(localstatedir)"'
 
-$(MANS_CPP): $(MANS_CPP:%=%.pre)
-	$(CPP) -C -P -I. $@.pre  $@
+bmc_watchdog_LDADD = \
+	$(top_builddir)/common/toolcommon/libtoolcommon.la \
+	$(top_builddir)/common/miscutil/libmiscutil.la \
+	$(top_builddir)/common/parsecommon/libparsecommon.la \
+	$(top_builddir)/common/portability/libportability.la \
+	$(top_builddir)/libfreeipmi/libfreeipmi.la
 
-dist_man_MANS = $(MANS_CPP)
+bmc_watchdog_SOURCES = \
+	bmc-watchdog.c \
+	bmc-watchdog.h \
+	bmc-watchdog-argp.c \
+	bmc-watchdog-argp.h
 
-CLEANFILES = $(MANS_CPP) *~
+$(top_builddir)/common/toolcommon/libtoolcommon.la : force-dependency-check
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
-DISTCLEANFILES = $(MANS_CPP) $(MANS_CPP:%=%.pre) .deps/*.P
+$(top_builddir)/common/miscutil/libmiscutil.la : force-dependency-check
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
-#  if you write a self-test script named `chk', uncomment the
-#  following and add `chk' to the EXTRA_DIST list
-#TESTS=chk
+$(top_builddir)/common/parsecommon/libparsecommon.la : force-dependency-check
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
-BMCWATCHDOGLOGdir = $(localstatedir)/log/$(PACKAGE)
+$(top_builddir)/common/portability/libportability.la : force-dependency-check
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
-EXTRA_DIST = freeipmi-bmc-watchdog.init freeipmi-bmc-watchdog.logrotate freeipmi-bmc-watchdog.sysconfig
+$(top_builddir)/libfreeipmi/libfreeipmi.la : force-dependency-check
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
-install-data-local: $(INSTALL_INIT_SCRIPTS) $(INSTALL_LOGROTATE_CONFIG) \
-	$(INSTALL_LOGDIR)
-
-install-init-scripts:
-	$(INSTALL) -m 755 -d $(DESTDIR)$(sysconfdir)/init.d
-	$(INSTALL) -m 755 $(srcdir)/freeipmi-bmc-watchdog.init $(DESTDIR)$(sysconfdir)/init.d/freeipmi-bmc-watchdog
-	$(INSTALL) -m 755 -d $(DESTDIR)/$(sysconfdir)/sysconfig
-	$(INSTALL) -m 444 $(srcdir)/freeipmi-bmc-watchdog.sysconfig $(DESTDIR)$(sysconfdir)/sysconfig/freeipmi-bmc-watchdog
-
-install-logrotate-config:
-	$(INSTALL) -m 755 -d $(DESTDIR)$(sysconfdir)/logrotate.d
-	$(INSTALL) -m 444 $(srcdir)/freeipmi-bmc-watchdog.logrotate $(DESTDIR)$(sysconfdir)/logrotate.d/freeipmi-bmc-watchdog
-
-install-logdir:
-	$(INSTALL) -m 755 -d $(DESTDIR)$(BMCWATCHDOGLOGdir)
-
-uninstall-local:
-	$(RM) -f $(DESTDIR)$(sysconfdir)/init.d/freeipmi-bmc-watchdog
-	$(RM) -f $(DESTDIR)$(sysconfdir)/logrotate.d/freeipmi-bmc-watchdog
-	$(RM) -f $(DESTDIR)$(sysconfdir)/sysconfig/freeipmi-bmc-watchdog
+force-dependency-check:

@@ -6,11 +6,12 @@ DISTCLEANFILES = .deps/*.P
 
 EXTRA_DIST = \
 	freeipmi-coding.txt \
+	freeipmi-design.txt \
 	freeipmi-hostrange.txt \
 	freeipmi-libraries.txt \
-	freeipmi-bugs-and-workarounds.txt
-
-docdir = $(datadir)/doc/$(PACKAGE)
+	freeipmi-testing.txt \
+	freeipmi-bugs-issues-and-workarounds.txt \
+	freeipmi-oem-documentation-requirements.txt
 
 doc_DATA = $(EXTRA_DIST)
 
