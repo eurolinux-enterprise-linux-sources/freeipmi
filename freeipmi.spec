@@ -2,7 +2,7 @@
 # Copyright (c) 2003-2013 FreeIPMI Core Team
 #
 
-Release: 3%{?dist}
+Release: 6%{?dist}
 
 Name: freeipmi
 Version: 1.2.1
@@ -11,8 +11,12 @@ Group: Applications/System
 URL: http://www.gnu.org/software/freeipmi/
 Source: ftp://ftp.gnu.org/gnu/freeipmi/%{name}-%{version}.tar.gz
 Source1: ipmi_monitoring_sensors.conf
+Source2: freeipmi-modalias.conf
+Patch1: freeipmi-1.2.1-bigendauth.patch
+Patch2: freeipmi-1.2.1-revshortopt.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: libgcrypt-devel texinfo
+Requires: module-init-tools
 Requires(pre): chkconfig
 Requires(post): chkconfig
 Requires(preun): chkconfig
@@ -60,6 +64,8 @@ provide data for a number of IPMI detection tools and features.
 
 %prep
 %setup -q
+%patch1 -p1 -b .bigendauth
+%patch2 -p0 -b .revshortopt
 
 %build
 export CFLAGS="-D_GNU_SOURCE $RPM_OPT_FLAGS"
@@ -91,6 +97,8 @@ echo freeipmi > %{buildroot}%{_localstatedir}/lib/freeipmi/ipckey
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/*.la
 
 cp %SOURCE1 $RPM_BUILD_ROOT/%{_sysconfdir}/
+install -d -m 755 ${RPM_BUILD_ROOT}%{_sysconfdir}/modprobe.d
+install -m 644 %SOURCE2 ${RPM_BUILD_ROOT}%{_sysconfdir}/modprobe.d/freeipmi-modalias.conf
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -141,6 +149,7 @@ fi
 %files
 %defattr(-,root,root)
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipmi_monitoring_sensors.conf
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/modprobe.d/freeipmi-modalias.conf
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/freeipmi.conf
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/freeipmi_interpret_sel.conf
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/freeipmi_interpret_sensor.conf
@@ -351,6 +360,11 @@ fi
 %{_mandir}/man8/ipmidetectd.8*
 
 %changelog
+* Thu Nov 21 2013 Ales Ledvinka <aledvink@redhat.com. - 1.2.1-6
+- Kernel module aliases configuration for kmod. (#1032965)
+- Big-Endian authentication fix. (#1032963)
+- Revert short options removal to preserve 0.7.16 command line parameters.
+
 * Mon Oct  7 2013 Ales Ledvinka <aledvink@redhat.com. - 1.2.1-3
 - Removed no longer needed ExclusiveArch (#951700)
 

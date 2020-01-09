@@ -1,0 +1,440 @@
+diff -up ./ipmi-chassis/ipmi-chassis-argp.c.revshortopt ./ipmi-chassis/ipmi-chassis-argp.c
+--- ./ipmi-chassis/ipmi-chassis-argp.c.revshortopt	2012-08-22 23:59:43.000000000 +0200
++++ ./ipmi-chassis/ipmi-chassis-argp.c	2013-12-06 09:51:16.262000000 +0100
+@@ -69,10 +69,10 @@ static struct argp_option cmdline_option
+     ARGP_COMMON_HOSTRANGED_OPTIONS,
+     ARGP_COMMON_OPTIONS_DEBUG,
+     /* for backwards compatability */
+-    { "get-capabilities", GET_CHASSIS_CAPABILITIES_KEY, NULL, OPTION_HIDDEN,
++    { "get-capabilities", GET_CHASSIS_CAPABILITIES_KEY, NULL, 0,
+       "Get chassis capabilities.", 40},
+     /* for backwards compatability */
+-    { "get-status", GET_CHASSIS_STATUS_KEY, NULL, OPTION_HIDDEN,
++    { "get-status", GET_CHASSIS_STATUS_KEY, NULL, 0,
+       "Get chassis status.", 41},
+     { "get-chassis-capabilities", GET_CHASSIS_CAPABILITIES_KEY, NULL, 0,
+       "Get chassis capabilities.", 40},
+diff -up ./ipmi-chassis/ipmi-chassis.h.revshortopt ./ipmi-chassis/ipmi-chassis.h
+--- ./ipmi-chassis/ipmi-chassis.h.revshortopt	2012-08-22 23:59:43.000000000 +0200
++++ ./ipmi-chassis/ipmi-chassis.h	2013-12-06 09:51:16.263000000 +0100
+@@ -26,15 +26,15 @@
+ 
+ enum ipmi_chassis_argp_option_keys
+   {
+-    GET_CHASSIS_CAPABILITIES_KEY = 160,
+-    GET_CHASSIS_STATUS_KEY = 161,
+-    CHASSIS_CONTROL_KEY = 162,
+-    CHASSIS_IDENTIFY_KEY = 163,
+-    GET_SYSTEM_RESTART_CAUSE_KEY = 164,
+-    GET_POWER_ON_HOURS_COUNTER_KEY = 165,
+-    SET_POWER_CYCLE_INTERVAL_KEY = 166,
+-    GET_BOOT_FLAGS_KEY = 167,
+-    SET_BOOT_FLAGS_KEY = 168,
++    GET_CHASSIS_CAPABILITIES_KEY = 'c',
++    GET_CHASSIS_STATUS_KEY = 's',
++    CHASSIS_CONTROL_KEY = 'O',
++    CHASSIS_IDENTIFY_KEY = 'i',
++    GET_SYSTEM_RESTART_CAUSE_KEY = 'R',
++    GET_POWER_ON_HOURS_COUNTER_KEY = 'H',
++    SET_POWER_CYCLE_INTERVAL_KEY = 'S',
++    GET_BOOT_FLAGS_KEY = 'G',
++    SET_BOOT_FLAGS_KEY = 'L',
+     SET_BOOT_FLAGS_BOOT_TYPE_KEY = 169,
+     SET_BOOT_FLAGS_LOCK_OUT_RESET_BUTTON_KEY = 170,
+     SET_BOOT_FLAGS_SCREEN_BLANK_KEY = 171,
+@@ -45,7 +45,7 @@ enum ipmi_chassis_argp_option_keys
+     SET_BOOT_FLAGS_USER_PASSWORD_BYPASS_KEY = 176,
+     SET_BOOT_FLAGS_FORCE_PROGRESS_EVENT_TRAPS_KEY = 177,
+     SET_BOOT_FLAGS_FIRMWARE_BIOS_VERBOSITY_KEY = 178,
+-    SET_POWER_RESTORE_POLICY_KEY = 179,
++    SET_POWER_RESTORE_POLICY_KEY = 'X',
+   };
+ 
+ struct cmd_set_system_boot_options
+diff -up ./ipmiconsole/ipmiconsole_.h.revshortopt ./ipmiconsole/ipmiconsole_.h
+--- ./ipmiconsole/ipmiconsole_.h.revshortopt	2012-08-22 23:59:39.000000000 +0200
++++ ./ipmiconsole/ipmiconsole_.h	2013-12-06 09:51:16.263000000 +0100
+@@ -41,11 +41,11 @@
+ 
+ enum ipmiconsole_argp_option_keys
+   {
+-    DONT_STEAL_KEY = 160,
+-    DEACTIVATE_KEY = 161,
++    DONT_STEAL_KEY = 'N',
++    DEACTIVATE_KEY = 'T',
+     SERIAL_KEEPALIVE_KEY = 162,
+     SERIAL_KEEPALIVE_EMPTY_KEY = 163,
+-    LOCK_MEMORY_KEY = 164,
++    LOCK_MEMORY_KEY = 'L',
+     ESCAPE_CHAR_KEY = 'e',
+     DEBUG_KEY = 165,
+     DEBUGFILE_KEY = 166,
+diff -up ./ipmidetect/ipmidetect-argp.c.revshortopt ./ipmidetect/ipmidetect-argp.c
+--- ./ipmidetect/ipmidetect-argp.c.revshortopt	2013-12-06 09:52:18.089000000 +0100
++++ ./ipmidetect/ipmidetect-argp.c	2013-12-06 12:32:12.785000000 +0100
+@@ -66,9 +66,9 @@ static char cmdline_args_doc[] = "";
+ 
+ static struct argp_option cmdline_options[] =
+   {
+-    { "hostname", IPMIDETECT_HOSTNAME_KEY, "HOST", 0,
++    { "hostname", IPMIDETECT_HOSTNAME_KEY, "HOST", OPTION_HIDDEN,
+       "Specify alternate server hostname", 1},
+-    { "hostname_legacy", IPMIDETECT_LEGACY_HOSTNAME_KEY, "HOST", OPTION_HIDDEN,
++    { "hostname_legacy", IPMIDETECT_LEGACY_HOSTNAME_KEY, "HOST", 0,
+       "Specify alternate server hostname", 2},
+     { "port", IPMIDETECT_PORT_KEY, "PORT", 0,
+       "Specify alternate server port", 3},
+diff -up ./ipmidetect/ipmidetect_.h.revshortopt ./ipmidetect/ipmidetect_.h
+--- ./ipmidetect/ipmidetect_.h.revshortopt	2013-12-06 10:00:50.547000000 +0100
++++ ./ipmidetect/ipmidetect_.h	2013-12-06 12:32:01.643000000 +0100
+@@ -43,7 +43,7 @@
+ 
+ enum ipmidetect_argp_option_keys
+   {
+-    IPMIDETECT_HOSTNAME_KEY = 'h',
++    IPMIDETECT_HOSTNAME_KEY = 188,
+     IPMIDETECT_LEGACY_HOSTNAME_KEY = 'o',	/* legacy */
+     IPMIDETECT_PORT_KEY = 'p',
+     IPMIDETECT_DETECTED_KEY = 'd',
+diff -up ./ipmipower/ipmipower.h.revshortopt ./ipmipower/ipmipower.h
+--- ./ipmipower/ipmipower.h.revshortopt	2012-08-22 23:59:39.000000000 +0200
++++ ./ipmipower/ipmipower.h	2013-12-06 09:51:16.263000000 +0100
+@@ -478,7 +478,7 @@ typedef struct ipmipower_connection *ipm
+ 
+ enum ipmipower_argp_option_keys
+   {
+-    IPMI_VERSION_KEY = 160,       /* legacy option */
++    IPMI_VERSION_KEY = 'R',       /* legacy option */
+     RMCPDUMP_KEY = 161,
+ 
+     ON_KEY = 'n',
+@@ -486,22 +486,22 @@ enum ipmipower_argp_option_keys
+     CYCLE_KEY = 'c',
+     RESET_KEY = 'r',
+     STAT_KEY = 's',
+-    PULSE_KEY = 162,
+-    SOFT_KEY = 163,
+-    ON_IF_OFF_KEY = 164,
+-    WAIT_UNTIL_OFF_KEY = 165,
+-    WAIT_UNTIL_ON_KEY = 166,
++    PULSE_KEY = 'j',
++    SOFT_KEY = 'm',
++    ON_IF_OFF_KEY = 'g',
++    WAIT_UNTIL_OFF_KEY = 'A',
++    WAIT_UNTIL_ON_KEY = 'G',
+     OEM_POWER_TYPE_KEY = 167,
+ 
+     RETRY_WAIT_TIMEOUT_KEY = 168,
+-    RETRANSMISSION_WAIT_TIMEOUT_KEY = 169,
++    RETRANSMISSION_WAIT_TIMEOUT_KEY = 'q',
+     RETRY_BACKOFF_COUNT_KEY = 170,
+-    RETRANSMISSION_BACKOFF_COUNT_KEY = 171,
+-    PING_INTERVAL_KEY = 172,
+-    PING_TIMEOUT_KEY = 173,
+-    PING_PACKET_COUNT_KEY = 174,
+-    PING_PERCENT_KEY = 175,
+-    PING_CONSEC_COUNT_KEY = 176,
++    RETRANSMISSION_BACKOFF_COUNT_KEY = 'b',
++    PING_INTERVAL_KEY = 'i',
++    PING_TIMEOUT_KEY = 'z',
++    PING_PACKET_COUNT_KEY = 'v',
++    PING_PERCENT_KEY = 'w',
++    PING_CONSEC_COUNT_KEY = 'x',
+   };
+ 
+ struct ipmipower_arguments
+diff -up ./ipmi-raw/ipmi-raw.h.revshortopt ./ipmi-raw/ipmi-raw.h
+--- ./ipmi-raw/ipmi-raw.h.revshortopt	2012-08-22 23:59:36.000000000 +0200
++++ ./ipmi-raw/ipmi-raw.h	2013-12-06 09:51:16.264000000 +0100
+@@ -31,7 +31,7 @@ enum ipmi_raw_argp_option_keys
+   {
+     CHANNEL_NUMBER_KEY = 160,	/* legacy */
+     SLAVE_ADDRESS_KEY = 161,	/* legacy */
+-    CMD_FILE_KEY = 162,
++    CMD_FILE_KEY = 'f',
+   };
+ 
+ struct ipmi_raw_arguments
+diff -up ./ipmi-sel/ipmi-sel-argp.c.revshortopt ./ipmi-sel/ipmi-sel-argp.c
+--- ./ipmi-sel/ipmi-sel-argp.c.revshortopt	2012-08-22 23:59:41.000000000 +0200
++++ ./ipmi-sel/ipmi-sel-argp.c	2013-12-06 09:51:16.264000000 +0100
+@@ -111,7 +111,7 @@ static struct argp_option cmdline_option
+     { "post-clear", POST_CLEAR_KEY, 0, 0,
+       "Clear SEL after displaying SEL records.", 51},
+     /* legacy */
+-    { "delete-all", DELETE_ALL_KEY, 0, OPTION_HIDDEN,
++    { "delete-all", DELETE_ALL_KEY, 0, 0,
+       "Delete all SEL records.", 52},
+     { "delete",     DELETE_KEY,     "RECORD-IDS-LIST", 0,
+       "Delete SEL records by record ids.", 53},
+diff -up ./ipmi-sel/ipmi-sel_.h.revshortopt ./ipmi-sel/ipmi-sel_.h
+--- ./ipmi-sel/ipmi-sel_.h.revshortopt	2012-08-22 23:59:41.000000000 +0200
++++ ./ipmi-sel/ipmi-sel_.h	2013-12-06 09:51:16.264000000 +0100
+@@ -53,15 +53,15 @@ enum ipmi_sel_argp_option_keys
+     TAIL_KEY = 166,
+     CLEAR_KEY = 167,
+     POST_CLEAR_KEY = 168,
+-    DELETE_ALL_KEY = 169,       /* legacy */
+-    DELETE_KEY = 170,
+-    DELETE_RANGE_KEY = 171,
++    DELETE_ALL_KEY = 'c',       /* legacy */
++    DELETE_KEY = 'd',
++    DELETE_RANGE_KEY = 'R',
+     SYSTEM_EVENT_ONLY_KEY = 172,
+     OEM_EVENT_ONLY_KEY = 173,
+     OUTPUT_MANUFACTURER_ID_KEY = 174,
+     OUTPUT_EVENT_STATE_KEY = 175,
+     EVENT_STATE_CONFIG_FILE_KEY = 176,
+-    HEX_DUMP_KEY = 177,
++    HEX_DUMP_KEY = 'x',
+     ASSUME_SYSTEM_EVENT_RECORDS_KEY = 178, /* legacy */
+     INTERPRET_OEM_DATA_KEY = 179,
+     OUTPUT_OEM_EVENT_STRINGS_KEY = 180,
+diff -up ./man/ipmi-chassis.8.pre.in.revshortopt ./man/ipmi-chassis.8.pre.in
+--- ./man/ipmi-chassis.8.pre.in.revshortopt	2012-08-22 23:59:36.000000000 +0200
++++ ./man/ipmi-chassis.8.pre.in	2013-12-06 09:51:16.265000000 +0100
+@@ -39,48 +39,48 @@ For a more powerful chassis power contro
+ The following options are specific to
+ .B Ipmi-chassis.
+ .TP
+-\fB\-\-get\-chassis\-capabilities\fR
++\fB\-c\fR, \fB\-\-get\-capabilities\fR, \fB\-\-get\-chassis\-capabilities\fR
+ Get chassis capabilities.  This command returns information on which
+ main chassis management functions are available.
+ .TP
+-\fB\-\-get\-chassis\-status\fR
++\fB\-s\fR, \fB\-\-get\-status\fR, \fB\-\-get\-chassis\-status\fR
+ Get chassis status.  This command returns high level status
+ information on the chassis.
+ .TP
+-\fB\-\-chassis\-control\fR=\fICONTROL\fR
++\fB\-O\fR, \fB\-\-chassis\-control\fR=\fICONTROL\fR
+ Control the chassis. This command provides power-up, power-down, and
+ reset control.  Supported values: POWER\-DOWN, POWER\-UP,
+ POWER\-CYCLE, HARD\-RESET, DIAGNOSTIC\-INTERRUPT, SOFT\-SHUTDOWN.
+ .TP
+-\fB\-\-chassis\-identify\fR=\fIIDENTIFY\fR
++\fB\-i\fR, \fB\-\-chassis\-identify\fR=\fIIDENTIFY\fR
+ Set chassis identification.  This command controls physical system
+ identification, typically a LED.  Supported values: TURN\-OFF to turn
+ off identification, <interval> to turn on identification for
+ "interval" seconds, FORCE to turn on indefinitely.
+ .\".TP
+-.\".\fB\-\-set\-power\-restore\-policy\fR=\fIPOLICY\fR
++.\".\fB\-X\fR, \fB\-\-set\-power\-restore\-policy\fR=\fIPOLICY\fR
+ .\".Set power restore policy.  This command determines how the system or
+ .\".chassis behaves when AC power returns after an AC power loss.
+ .\".Supported values: LIST\-SUPPORTED\-POLICIES, ALWAYS\-ON, RESTORE,
+ .\".ALWAYS\-OFF.  See current power restore policy via the
+ .\".\fB\-\-get\-status\fR option.
+ .\"..TP
+-.\".\fB\-\-set\-power\-cycle\-interval\fR=\fISECONDS\fR
++.\".\fB\-S\fR, \fB\-\-set\-power\-cycle\-interval\fR=\fISECONDS\fR
+ .\".Set power cycle interval in seconds.  This interval determines the
+ .\".time the system power will be powered down during a power cycle
+ .\".operation initiated by a chassis control command.
+ .TP
+-\fB\-\-get\-system\-restart\-cause\fR
++\fB\-R\fR, \fB\-\-get\-system\-restart\-cause\fR
+ Get system restart cause.
+ .TP
+-\fB\-\-get\-power\-on\-hours\-counter\fR
++\fB\-H\fR, \fB\-\-get\-power\-on\-hours\-counter\fR
+ Get power on hours (POH) counter.
+ .\"..TP
+-.\".\fB\-\-get\-boot\-flags\fR
++.\".\fB\-G\fR, \fB\-\-get\-boot\-flags\fR
+ .\".Get system boot\-flags.  This command returns the current boot
+ .\".flag settings.
+ .\"..TP
+-.\".\fB\-\-set\-boot\-flags\fR
++.\".\fB\-L\fR, \fB\-\-set\-boot\-flags\fR
+ .\".Set system boot flags.  Must be specified to use the 
+ .\".\fB\-\-boot\-type\fR,
+ .\".\fB\-\-lock\-out\-reset\-button\fR,
+diff -up ./man/ipmiconsole.8.pre.in.revshortopt ./man/ipmiconsole.8.pre.in
+--- ./man/ipmiconsole.8.pre.in.revshortopt	2012-08-22 23:59:36.000000000 +0200
++++ ./man/ipmiconsole.8.pre.in	2013-12-06 09:51:16.265000000 +0100
+@@ -93,7 +93,7 @@ The following options are specific to
+ \fB\-e\fR \fICHAR\fR, \fB\-\-escape-char\fR=\fICHAR\fR
+ Specify an alternate escape character (default char '&').
+ .TP
+-\fB\-\-dont-steal\fR
++\fB\-N\fR, \fB\-\-dont-steal\fR
+ Do not steal an SOL session if one is already detected as being in
+ use.  Under most circumstances, if SOL is detected as being in use,
+ .B ipmiconsole
+@@ -101,7 +101,7 @@ will attempt to steal the SOL session aw
+ This default behavior exists for several reasons, most notably that
+ earlier SOL sessions may have not been able to be deactivate properly.
+ .TP
+-\fB\-\-deactivate\fR
++\fB\-T\fR, \fB\-\-deactivate\fR
+ Deactivate a SOL session if one is detected as being in use and exit.
+ .TP
+ \fB\-\-serial\-keepalive\fR
+@@ -129,7 +129,7 @@ risk regularly sending a NUL character b
+ systems may not ACK a SOL packet without character data in it, meaning
+ these keepalive packets do nothing. 
+ .TP
+-\fB\-\-lock-memory\fR
++\fB\-L\fR, \fB\-\-lock-memory\fR
+ Lock sensitive information (such as usernames and passwords) in
+ memory.
+ .if @WITH_DEBUG@ \{
+diff -up ./man/ipmidetect.8.pre.in.revshortopt ./man/ipmidetect.8.pre.in
+--- ./man/ipmidetect.8.pre.in.revshortopt	2013-12-06 10:21:44.069000000 +0100
++++ ./man/ipmidetect.8.pre.in	2013-12-06 10:41:06.943000000 +0100
+@@ -52,10 +52,10 @@ listed must be the shortened names of ho
+ 
+ .SH "OPTIONS"
+ .TP
+-\fB\-h\fR, \fB\-\-help\fR
++\fB\-?\fR, \fB\-\-help\fR
+ Print help and exit
+ .TP
+-\fB\-v\fR, \fB\-\-version\fR
++\fB\-V\fR, \fB\-\-version\fR
+ Print version and exit
+ .TP
+ \fB\-o\fR \fISTRING\fR, \fB\-\-hostname\fR=\fISTRING\fR
+diff -up ./man/ipmipower.8.pre.in.revshortopt ./man/ipmipower.8.pre.in
+--- ./man/ipmipower.8.pre.in.revshortopt	2012-08-22 23:59:36.000000000 +0200
++++ ./man/ipmipower.8.pre.in	2013-12-06 09:51:16.265000000 +0100
+@@ -107,13 +107,13 @@ Reset the target hosts.
+ \fB\-s\fR, \fB\-\-stat\fR
+ Get power status of the target hosts.
+ .TP
+-\fB\-\-pulse\fR
++\fB\-j\fR, \fB\-\-pulse\fR
+ Send power diagnostic interrupt to target hosts.
+ .TP
+-\fB\-\-soft\fR
++\fB\-m\fR, \fB\-\-soft\fR
+ Initiate a soft-shutdown of the OS via ACPI.
+ .TP
+-\fB\-\-on\-if\-off\fR
++\fB\-g\fR, \fB\-\-on\-if\-off\fR
+ The IPMI specification does not require the power cycle or hard reset
+ commands to turn on a machine that is currently powered off.  This
+ option will force
+@@ -121,14 +121,14 @@ option will force
+ to issue a power on command instead of a power cycle or hard reset
+ command if the remote machine's power is currently off.
+ .TP
+-\fB\-\-wait\-until\-on\fR
++\fB\-A\fR, \fB\-\-wait\-until\-on\fR
+ The IPMI specification allows power on commands to return prior to the
+ power on actually taking place.  This option will force
+ .B ipmipower 
+ to regularly query the remote BMC and return only after the machine
+ has powered on.
+ .TP
+-\fB\-\-wait\-until\-off\fR
++\fB\-G\fR, \fB\-\-wait\-until\-off\fR
+ The IPMI specification allows power off commands to return prior the
+ power off actually taking place.  This option will force
+ .B ipmipower 
+@@ -147,19 +147,19 @@ information.
+ The following options are used to change the networking behavior of
+ .B ipmipower.
+ .TP
+-\fB\-\-retransmission\-wait\-timeout\fR=\fIMILLISECONDS\fR
++\fB\-q\fR, \fB\-\-retransmission\-wait\-timeout\fR=\fIMILLISECONDS\fR
+ Specify the retransmission wait timeout length in milliseconds.  The
+ retransmission wait timeout is similar to the retransmission timeout
+ above, but is used specifically for power completion verification with
+ the \fB\-\-wait\-until\-on\fR and \fB\-\-wait\-until\-off\fR options.
+ Defaults to 500 milliseconds (0.5 seconds).
+ .TP
+-\fB\-\-retransmission\-backoff\-count\fR=\fICOUNT\fR
++\fB\-b\fR, \fB\-\-retransmission\-backoff\-count\fR=\fICOUNT\fR
+ Specify the retransmission backoff count for retransmissions.  After
+ ever COUNT retransmissions, the retransmission timeout length will be
+ increased by another factor.  Defaults to 8.
+ .TP
+-\fB\-\-ping\-interval\fR=\fIMILLISECONDS\fR
++\fB\-i\fR, \fB\-\-ping\-interval\fR=\fIMILLISECONDS\fR
+ Specify the ping interval length in milliseconds.  When running in
+ interactive mode, RMCP (Remote Management Control Protocol) discovery
+ messages will be sent to all configured remote hosts every
+@@ -170,7 +170,7 @@ discovery messages can be disabled by se
+ ping discovery messages are automatically disabled in non-interactive
+ mode.
+ .TP
+-\fB\-\-ping\-timeout\fR=\fIMILLISECONDS\fR
++\fB\-z\fR, \fB\-\-ping\-timeout\fR=\fIMILLISECONDS\fR
+ Specify the ping timeout length in milliseconds.  When running in
+ interactive mode, RMCP (Remote Management Control Protocol) messages
+ discovery will be sent to all configured remote hosts to confirm their
+@@ -178,12 +178,12 @@ support of IPMI. A remote host is consid
+ does not respond in MILLISECONDS time.  Defaults to 30000 milliseconds
+ (30 seconds).  The ping timeout cannot be larger than the ping interval.
+ .TP
+-\fB\-\-ping\-packet\-count\fR=\fICOUNT\fR
++\fB\-v\fR, \fB\-\-ping\-packet\-count\fR=\fICOUNT\fR
+ Specify the ping packet count size.  Defaults to 10.  See the
+ \fB\-\-ping-percent\-fR option below for more information on this
+ option.
+ .TP
+-\fB\-\-ping\-percent\fR=\fIPERCENT\fR
++\fB\-w\fR, \fB\-\-ping\-percent\fR=\fIPERCENT\fR
+ Specify the ping percent value.  Defaults to 50.
+ 
+ Since IPMI is based on UDP, it is
+@@ -211,7 +211,7 @@ be reliable.  This heuristic can be disa
+ ping packet count or ping percent to 0.  This feature is not used if
+ ping interval is set to 0.
+ .TP
+-\fB\-\-ping\-consec\-count\fR=\fICOUNT\fR
++\fB\-x\fR, \fB\-\-ping\-consec\-count\fR=\fICOUNT\fR
+ Specify the ping consecutive count.  This is another heuristic used to
+ determine if a node should be considered discovered, undiscovered, or
+ with a bad connection.  If a valid RMCP pong response was received for
+diff -up ./man/ipmi-raw.8.pre.in.revshortopt ./man/ipmi-raw.8.pre.in
+--- ./man/ipmi-raw.8.pre.in.revshortopt	2012-08-22 23:59:36.000000000 +0200
++++ ./man/ipmi-raw.8.pre.in	2013-12-06 09:51:16.265000000 +0100
+@@ -35,7 +35,7 @@ required user privilege will depend on t
+ The following options are specific to
+ .B Ipmi-raw.
+ .TP
+-\fB\-\-file\fR=\fICMD\-FILE\fR
++\fB\-f\fR, \fB\-\-file\fR=\fICMD\-FILE\fR
+ Specify a file to read command requests from.
+ #include <@top_srcdir@/man/manpage-common-hostranged-options-header.man>
+ #include <@top_srcdir@/man/manpage-common-hostranged-buffer.man>
+diff -up ./man/ipmi-sel.8.pre.in.revshortopt ./man/ipmi-sel.8.pre.in
+--- ./man/ipmi-sel.8.pre.in.revshortopt	2012-08-22 23:59:36.000000000 +0200
++++ ./man/ipmi-sel.8.pre.in	2013-12-06 09:51:16.266000000 +0100
+@@ -109,7 +109,7 @@ count is calculated by approximating the
+ records.  It's correctness depends highly on the SEL implementation by
+ the vendor.
+ .TP
+-\fB\-\-clear\fR
++\fB\-c\fR, \fB\-\-clear\fR, \fB\-\-delete-all\fR
+ Clear SEL.
+ .TP
+ \fB\-\-post\-clear\fR
+@@ -126,11 +126,11 @@ generated before clearing the SEL.  Note
+ optionally implemented by vendors and may not be available on all
+ machines.
+ .TP
+-\fB\-\-delete\fR=\fIRECORD\-IDS\-LIST\fR
++\fB\-d REC-LIST\fR, \fB\-\-delete\fR=\fIRECORD\-IDS\-LIST\fR
+ Delete records by record id in the SEL.  Accepts space or comma
+ separated lists.
+ .TP
+-\fB\-\-delete-range\fR=\fISTART\-END\fR
++\fB\-R \fISTART\-END\fR, \fB\-\-delete-range\fR=\fISTART\-END\fR
+ Delete record ids from START to END in the SEL.
+ .TP
+ \fB\-\-system\-event\-only\fR
+@@ -156,7 +156,7 @@ for more information.
+ Specify an alternate event state configuration file.  Option ignored
+ if \fB\-\-output\-event\-state\fR not specified.
+ .TP
+-\fB\-\-hex\-dump\fR
++\fB\-x\fR, \fB\-\-hex\-dump\fR
+ Hex-dump SEL entries.
+ .if 0 \{
+ .TP
