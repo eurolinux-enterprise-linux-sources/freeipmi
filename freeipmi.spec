@@ -2,7 +2,7 @@
 # Copyright (c) 2003-2013 FreeIPMI Core Team
 #
 
-Release: 6%{?dist}
+Release: 7%{?dist}
 
 Name: freeipmi
 Version: 1.2.1
@@ -14,6 +14,7 @@ Source1: ipmi_monitoring_sensors.conf
 Source2: freeipmi-modalias.conf
 Patch1: freeipmi-1.2.1-bigendauth.patch
 Patch2: freeipmi-1.2.1-revshortopt.patch
+Patch3: freeipmi-1.2.1-loop-on-select.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: libgcrypt-devel texinfo
 Requires: module-init-tools
@@ -66,6 +67,7 @@ provide data for a number of IPMI detection tools and features.
 %setup -q
 %patch1 -p1 -b .bigendauth
 %patch2 -p0 -b .revshortopt
+%patch3 -p1 -b .looponselect
 
 %build
 export CFLAGS="-D_GNU_SOURCE $RPM_OPT_FLAGS"
@@ -360,9 +362,12 @@ fi
 %{_mandir}/man8/ipmidetectd.8*
 
 %changelog
+* Thu Dec 03 2015 Boris Ranto <branto@redhat.com. - 1.2.1-7
+- Loop on select syscalls (rhbz#1197096)
+
 * Thu Nov 21 2013 Ales Ledvinka <aledvink@redhat.com. - 1.2.1-6
-- Kernel module aliases configuration for kmod. (#1032965)
-- Big-Endian authentication fix. (#1032963)
+- Kernel module aliases configuration for kmod. (#1020650)
+- Big-Endian authentication fix. (#1022178)
 - Revert short options removal to preserve 0.7.16 command line parameters.
 
 * Mon Oct  7 2013 Ales Ledvinka <aledvink@redhat.com. - 1.2.1-3
@@ -472,7 +477,7 @@ fi
 * Tue Dec 18 2007 Phil Knirsch <pknirsch@redhat.com> 0.5.1-1
 - Update to freeipmi-0.5.1
 
-* Wed Nov 19 2007 Albert Chu <chu11@llnl.gov> 0.5.0
+* Wed Nov 21 2007 Albert Chu <chu11@llnl.gov> 0.5.0
 - Remove ipmimonitoring subpackage.  Merge into head package.
 
 * Wed Nov 07 2007 Phil Knirsch <pknirsch@redhat.com> 0.4.6-3.fc7
@@ -498,7 +503,7 @@ fi
 * Wed Jun 13 2007 Phil Knirsch <pknirsch@redhat.com> 0.4.beta0-1
 - Some package cleanup and split of configuration and initscript
 
-* Fri Feb 28 2007 Albert Chu <chu11@llnl.gov> 0.4.beta0-1
+* Wed Feb 28 2007 Albert Chu <chu11@llnl.gov> 0.4.beta0-1
 - Add ipmidetectd subpackage.
 
 * Fri Feb 16 2007 Albert Chu <chu11@llnl.gov> 0.4.beta0-1
