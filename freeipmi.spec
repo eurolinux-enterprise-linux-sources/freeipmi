@@ -3,7 +3,7 @@
 
 Name:             freeipmi
 Version:          1.5.7
-Release:          2%{?dist}
+Release:          3%{?dist}
 Summary:          IPMI remote console and system management software
 License:          GPLv3+
 Group:            Applications/System
@@ -16,6 +16,7 @@ Source4:          os-shutdown-event.service
 Source5:          os-startup-event.service
 
 Patch1:           freeipmi-1.5.7-manpage.patch
+Patch2:           freeipmi-1.5.7-bridged_sensors.patch
 
 BuildRequires:    libgcrypt-devel texinfo systemd
 Requires(preun):  info systemd
@@ -64,6 +65,7 @@ IPMI SEL syslog logging daemon.
 %prep
 %setup -q
 %patch1 -p1 -b .manpage
+%patch2 -p1 -b .bridged_sensors
 
 %build
 export CFLAGS="-D_GNU_SOURCE $RPM_OPT_FLAGS"
@@ -369,6 +371,9 @@ fi
 %dir %{_localstatedir}/cache/ipmiseld
 
 %changelog
+* Tue Mar 26 2019 Vaclav Dolezal <vdolezal@redhat.com> - 1.5.7-3
+- Fix querying bridged sensors (#1550929)
+
 * Mon Nov 20 2017 Josef Ridky <jridky@redhat.com> - 1.5.7-2
 - Additional fix of manpage command examples (#1353981)
 

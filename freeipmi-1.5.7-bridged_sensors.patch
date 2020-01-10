@@ -1,0 +1,45 @@
+commit 2ad5407054742afc0100dd9429de9cb4a5773d5f
+Author: Albert Chu <chu11@llnl.gov>
+Date:   Fri Feb 16 10:57:46 2018 -0800
+
+    When bridging, send to BMC LUN not SMS LUN.
+
+diff --git a/libfreeipmi/api/ipmi-kcs-driver-api.c b/libfreeipmi/api/ipmi-kcs-driver-api.c
+index 82c0bf5b8..3c5e282da 100644
+--- a/libfreeipmi/api/ipmi-kcs-driver-api.c
++++ b/libfreeipmi/api/ipmi-kcs-driver-api.c
+@@ -441,7 +441,7 @@ _api_kcs_ipmb_send (ipmi_ctx_t ctx,
+                          ctx->target.net_fn,
+                          ctx->target.lun,
+                          IPMI_SLAVE_ADDRESS_BMC,
+-                         IPMI_BMC_IPMB_LUN_SMS_MSG_LUN,
++                         IPMI_BMC_IPMB_LUN_BMC,
+                          ctx->io.inband.rq_seq,
+                          obj_ipmb_msg_hdr_rq) < 0)
+     {
+diff --git a/libfreeipmi/api/ipmi-lan-session-common.c b/libfreeipmi/api/ipmi-lan-session-common.c
+index c9193953f..9e0e4f8ce 100644
+--- a/libfreeipmi/api/ipmi-lan-session-common.c
++++ b/libfreeipmi/api/ipmi-lan-session-common.c
+@@ -1222,7 +1222,7 @@ _ipmi_cmd_send_ipmb (ipmi_ctx_t ctx, fiid_obj_t obj_cmd_rq)
+                          ctx->target.net_fn,
+                          ctx->target.lun,
+                          IPMI_SLAVE_ADDRESS_BMC,
+-                         IPMI_BMC_IPMB_LUN_SMS_MSG_LUN,
++                         IPMI_BMC_IPMB_LUN_BMC,
+                          ctx->io.outofband.rq_seq,
+                          obj_ipmb_msg_hdr_rq) < 0)
+     {
+diff --git a/libfreeipmi/api/ipmi-ssif-driver-api.c b/libfreeipmi/api/ipmi-ssif-driver-api.c
+index b9bd0dcb6..8bd7b9601 100644
+--- a/libfreeipmi/api/ipmi-ssif-driver-api.c
++++ b/libfreeipmi/api/ipmi-ssif-driver-api.c
+@@ -449,7 +449,7 @@ _api_ssif_ipmb_send (ipmi_ctx_t ctx,
+                          ctx->target.net_fn,
+                          ctx->target.lun,
+                          IPMI_SLAVE_ADDRESS_BMC,
+-                         IPMI_BMC_IPMB_LUN_SMS_MSG_LUN,
++                         IPMI_BMC_IPMB_LUN_BMC,
+                          ctx->io.inband.rq_seq,
+                          obj_ipmb_msg_hdr_rq) < 0)
+     {
