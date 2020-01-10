@@ -3,7 +3,7 @@
 
 Name:             freeipmi
 Version:          1.2.9
-Release:          7%{?dist}
+Release:          8%{?dist}
 Summary:          IPMI remote console and system management software
 License:          GPLv3+
 Group:            Applications/System
@@ -12,6 +12,8 @@ Source0:          http://ftp.gnu.org/gnu/%{name}/%{name}-%{version}.tar.gz
 Source1:          bmc-watchdog.service
 Source2:          ipmidetectd.service
 Source3:          ipmiseld.service
+Source4:          os-shutdown-event.service
+Source5:          os-startup-event.service
 Patch1:           freeipmi-1.2.1-bigendauth.patch
 BuildRequires:    libgcrypt-devel texinfo systemd-units
 Requires(preun):  info systemd-units
@@ -78,20 +80,24 @@ echo freeipmi > $RPM_BUILD_ROOT%{_localstatedir}/lib/freeipmi/ipckey
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/*.la
 # Install systemd units
 install -m 755 -d $RPM_BUILD_ROOT/%{_unitdir}
-install -m 644 %SOURCE1 %SOURCE2 %SOURCE3 $RPM_BUILD_ROOT/%{_unitdir}/
+install -m 644 %SOURCE1 %SOURCE2 %SOURCE3 %SOURCE4 %SOURCE5 $RPM_BUILD_ROOT/%{_unitdir}/
 # Remove initscripts
 rm -rf $RPM_BUILD_ROOT/%{_initrddir} $RPM_BUILD_ROOT/%{_sysconfdir}/init.d
 
 %post
 /sbin/install-info %{_infodir}/freeipmi-faq.info.gz %{_infodir}/dir &>/dev/null || :
 /sbin/ldconfig
+%systemd_post os-shutdown-event.service os-startup-event.service
 
 %preun
 if [ $1 = 0 ]; then
     /sbin/install-info --delete %{_infodir}/freeipmi-faq.info.gz %{_infodir}/dir &>/dev/null || :
 fi
+%systemd_preun os-shutdown-event.service os-startup-event.service
 
-%postun -p /sbin/ldconfig
+%postun
+/sbin/ldconfig
+%systemd_postun_with_restart os-shutdown-event.service os-startup-event.service
 
 %post bmc-watchdog
 %systemd_post bmc-watchdog.service
@@ -272,6 +278,8 @@ fi
 %{_mandir}/man5/libipmiconsole.conf.5*
 %{_mandir}/man7/freeipmi.7*
 %dir %{_localstatedir}/cache/ipmimonitoringsdrcache
+%{_unitdir}/os-shutdown-event.service
+%{_unitdir}/os-startup-event.service
 
 %files devel
 %dir %{_datadir}/doc/%{name}/contrib/libipmimonitoring
@@ -349,6 +357,9 @@ fi
 %dir %{_localstatedir}/cache/ipmiseld
 
 %changelog
+* Tue Jun 28 2016 Boris Ranto <branto@redhat.com> - 1.2.9-8
+- Package os event systemd services (#1122307)
+
 * Mon Jul 06 2015 Ales Ledvinka <aledvink@redhat.com> - 1.2.9-7
 - Big-Endian authentication fix. (#1189065)
 
