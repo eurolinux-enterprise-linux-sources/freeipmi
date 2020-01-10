@@ -3,7 +3,7 @@
 
 Name:             freeipmi
 Version:          1.2.9
-Release:          6%{?dist}
+Release:          7%{?dist}
 Summary:          IPMI remote console and system management software
 License:          GPLv3+
 Group:            Applications/System
@@ -12,6 +12,7 @@ Source0:          http://ftp.gnu.org/gnu/%{name}/%{name}-%{version}.tar.gz
 Source1:          bmc-watchdog.service
 Source2:          ipmidetectd.service
 Source3:          ipmiseld.service
+Patch1:           freeipmi-1.2.1-bigendauth.patch
 BuildRequires:    libgcrypt-devel texinfo systemd-units
 Requires(preun):  info systemd-units
 Requires(post):   info systemd-units systemd-sysv
@@ -59,6 +60,7 @@ IPMI SEL syslog logging daemon.
 
 %prep
 %setup -q
+%patch1 -p1 -b .bigendauth
 
 %build
 export CFLAGS="-D_GNU_SOURCE $RPM_OPT_FLAGS"
@@ -347,6 +349,9 @@ fi
 %dir %{_localstatedir}/cache/ipmiseld
 
 %changelog
+* Mon Jul 06 2015 Ales Ledvinka <aledvink@redhat.com> - 1.2.9-7
+- Big-Endian authentication fix. (#1189065)
+
 * Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1.2.9-6
 - Mass rebuild 2014-01-24
 
@@ -755,151 +760,3 @@ fi
   files for backwards compatibility.
 - More detailed release information can be found in the NEWS file.
 
-* Tue Dec  7 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.12-1
-- Updated to freeipmi-0.8.12, see announce at
-  http://lists.gnu.org/archive/html/freeipmi-users/2010-12/msg00000.html
-
-* Tue Nov  2 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.11-1
-- Updated to freeipmi-0.8.11
-
-* Wed Sep 29 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.10-1
-- Updated to freeipmi-0.8.10
-
-* Mon Aug 23 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.9-1
-- Updated to freeipmi-0.8.9
-
-* Wed Jul 21 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.8-1
-- Updated to freeipmi-0.8.8
-
-* Mon Jun 21 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.7-1
-- Updated to freeipmi-0.8.7
-
-* Tue May 25 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.6-1
-- Updated to freeipmi-0.8.6
-
-* Fri Apr 30 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.5-1
-- Updated to freeipmi-0.8.5
-
-* Mon Mar  8 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.4-1
-- Updated to freeipmi-0.8.4
-
-* Wed Feb  3 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.3-1
-- Updated to freeipmi-0.8.3
-
-* Thu Jan 14 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.2-2
-- Fixed rpm scripts to handle new names of freeipmi services
-
-* Thu Jan  7 2010 Jan Safranek <jsafrane@redhat.com> - 0.8.2-1
-- Update to freeipmi-0.8.2
-
-* Tue Dec  1 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.16-1
-- Update to freeipmi-0.7.16
-
-* Mon Oct 26 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.14-1
-- Update to freeipmi-0.7.14
-
-* Mon Oct  5 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.13-2
-- Fix package source URL
-
-* Fri Oct  2 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.13-1
-- Update to freeipmi-0.7.13
-
-* Mon Sep 14 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.12-2
-- Fix init scripts to be LSB compliant and return correct exit codes
-  and provide mandatory actions (#523169, #523177)
-
-* Wed Sep  9 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.12-2
-- Update to freeipmi-0.7.12
-
-* Thu Aug  6 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.11-2
-- Fix installation with --excludedocs option (#515926)
-
-* Wed Jul 29 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.11-1
-- Update to freeipmi-0.7.11
-
-* Fri Jul 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.7.10-2
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
-
-* Mon Jun 29 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.10-2
-- Fix (de-)installation scripts
-
-* Wed Jun 17 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.10-1
-- Update to freeipmi-0.7.10
-
-* Mon May 18 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.9-1
-- Update to freeipmi-0.7.9
-
-* Thu Apr 16 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.8-2
-- Fix compilation flags, debuginfo package is correctly generated now
-
-* Tue Apr 14 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.8-1
-- Update to freeipmi-0.7.8
-
-* Thu Apr  9 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.7-1
-- Update to freeipmi-0.7.7
-
-* Tue Mar 10 2009 Jesse Keating <jkeating@redhat.com> - 0.7.6-2
-- Fix the bad dist macro
-- Remove version define, that's what the Version line is for
-- Remove name define, that's what the Name line is for
-- Use the real Release line in the if debug statement
-
-* Mon Mar  9 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.6-1
-- Update to freeipmi-0.7.6
-
-* Tue Feb 24 2009 Jan Safranek <jsafrane@redhat.com> - 0.7.5-1
-- Update to freeipmi-0.7.5
-
-* Thu Jan 22 2009 Karsten Hopp <karsten@redhat.com> 0.6.4-2
-- fix ipmiconsole log directory
-
-* Mon Jul 28 2008 Phil Knirsch <pknirsch@redhat.com> - 0.6.4-1
-- Update to freeipmi-0.6.4
-- Fixed unecessary logrotate message for bmc-watchdog (#456648)
-
-* Wed Feb 27 2008 Phil Knirsch <pknirsch@redhat.com> - 0.5.1-3
-- Fix GCC 4.3 rebuild problems
-
-* Tue Feb 19 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 0.5.1-2
-- Autorebuild for GCC 4.3
-
-* Tue Dec 18 2007 Phil Knirsch <pknirsch@redhat.com> 0.5.1-1
-- Update to freeipmi-0.5.1
-
-* Wed Nov 19 2007 Albert Chu <chu11@llnl.gov> 0.5.0
-- Remove ipmimonitoring subpackage.  Merge into head package.
-
-* Wed Nov 07 2007 Phil Knirsch <pknirsch@redhat.com> 0.4.6-3.fc7
-- More fixes for Fedora Review:
- o Added ExclusiveArch due to missing lopl (#368541)
-
-* Tue Nov 06 2007 Phil Knirsch <pknirsch@redhat.com> 0.4.6-2.fc7
-- Several fixes due to Fedora package review:
- o Fixed Group for all subpackages
- o Added missng Requires(Post|Preun) for several packages
- o Removed static libraries and .la files
- o Fixed open bug (missing mode for O_CREATE)
- o Fixed incorrect options for bmc-watchdog daemon
-
-* Mon Nov 05 2007 Phil Knirsch <pknirsch@redhat.com> 0.4.6-1.fc7
-- Specfile cleanup for Fedora inclusion
-- Fixed several rpmlint warnings and errors:
- o Moved all devel libs to proper package
-
-* Wed Aug 01 2007 Troy Telford <ttelford@lnxi.com> 0.4.0
-- Some package cleanup so it builds on SLES
-
-* Wed Jun 13 2007 Phil Knirsch <pknirsch@redhat.com> 0.4.beta0-1
-- Some package cleanup and split of configuration and initscript
-
-* Fri Feb 28 2007 Albert Chu <chu11@llnl.gov> 0.4.beta0-1
-- Add ipmidetectd subpackage.
-
-* Fri Feb 16 2007 Albert Chu <chu11@llnl.gov> 0.4.beta0-1
-- Add ipmimonitoring subpackage.
-
-* Sun Jul 30 2006 Albert Chu <chu11@llnl.gov> 0.3.beta0-1
-- Re-architect for 0.3.X
-
-* Mon May 15 2006 Albert Chu <chu11@llnl.gov> 0.3.beta0-1
-- Fixed up spec file to pass rpmlint
