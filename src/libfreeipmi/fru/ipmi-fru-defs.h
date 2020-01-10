@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,8 @@
 #define IPMI_FRU_FLAGS_MASK \
   (IPMI_FRU_FLAGS_DEBUG_DUMP \
    | IPMI_FRU_FLAGS_SKIP_CHECKSUM_CHECKS \
-   | IPMI_FRU_FLAGS_INTERPRET_OEM_DATA)
+   | IPMI_FRU_FLAGS_INTERPRET_OEM_DATA \
+   | IPMI_FRU_FLAGS_READ_RAW)
 
 #define IPMI_FRU_BUF_LEN 2048
 
@@ -52,6 +53,9 @@ struct ipmi_fru_ctx {
   unsigned int product_info_area_starting_offset;
   unsigned int multirecord_area_starting_offset;
   unsigned int device_opened;
+
+  int device_opened_with_buffer;
+  uint8_t frudata[IPMI_FRU_AREA_SIZE_MAX];
 
   int chassis_info_area_parsed;
   int board_info_area_parsed;

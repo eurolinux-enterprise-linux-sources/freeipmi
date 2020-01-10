@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * 
  */
 /*****************************************************************************\
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -54,13 +54,15 @@
 
 #include "freeipmi/interpret/ipmi-interpret.h"
 #include "freeipmi/spec/ipmi-event-reading-type-code-spec.h"
-#include "freeipmi/spec/ipmi-event-reading-type-code-oem-spec.h"
 #include "freeipmi/spec/ipmi-iana-enterprise-numbers-spec.h"
 #include "freeipmi/spec/ipmi-product-id-spec.h"
 #include "freeipmi/spec/ipmi-sensor-types-spec.h"
 #include "freeipmi/spec/ipmi-sensor-types-oem-spec.h"
 #include "freeipmi/spec/ipmi-sensor-and-event-code-tables-spec.h"
-#include "freeipmi/spec/ipmi-sensor-and-event-code-tables-oem-spec.h"
+#include "freeipmi/spec/oem/ipmi-event-reading-type-code-oem-dell-spec.h"
+#include "freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-dell-spec.h"
+#include "freeipmi/spec/oem/ipmi-event-reading-type-code-oem-supermicro-spec.h"
+#include "freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-supermicro-spec.h"
 
 #include "ipmi-interpret-defs.h"
 #include "ipmi-interpret-trace.h"
@@ -295,8 +297,9 @@ static struct ipmi_interpret_sensor_config ipmi_interpret_sensor_power_supply_co
     { "IPMI_Power_Supply_Power_Supply_Input_Lost_Or_Out_Of_Range", IPMI_INTERPRET_STATE_CRITICAL},
     { "IPMI_Power_Supply_Power_Supply_Input_Out_Of_Range_But_Present", IPMI_INTERPRET_STATE_CRITICAL},
     { "IPMI_Power_Supply_Configuration_Error", IPMI_INTERPRET_STATE_CRITICAL},
+    { "IPMI_Power_Supply_Power_Supply_Inactive", IPMI_INTERPRET_STATE_WARNING},
   };
-static unsigned int ipmi_interpret_sensor_power_supply_config_len = 8;
+static unsigned int ipmi_interpret_sensor_power_supply_config_len = 9;
 
 static struct ipmi_interpret_sensor_config ipmi_interpret_sensor_power_supply_state_config[] =
   {
@@ -720,8 +723,12 @@ static struct ipmi_interpret_sensor_config ipmi_interpret_sensor_os_boot_config[
     { "IPMI_OS_Boot_CD_ROM_Boot_Completed", IPMI_INTERPRET_STATE_NOMINAL},
     { "IPMI_OS_Boot_ROM_Boot_Completed", IPMI_INTERPRET_STATE_NOMINAL},
     { "IPMI_OS_Boot_Boot_Completed_Boot_Device_Not_Specified", IPMI_INTERPRET_STATE_WARNING},
+    { "IPMI_OS_Boot_Base_OS_Hypervisor_Installation_Started", IPMI_INTERPRET_STATE_NOMINAL},
+    { "IPMI_OS_Boot_Base_OS_Hypervisor_Installation_Completed", IPMI_INTERPRET_STATE_NOMINAL},
+    { "IPMI_OS_Boot_Base_OS_Hypervisor_Installation_Aborted", IPMI_INTERPRET_STATE_WARNING},
+    { "IPMI_OS_Boot_Base_OS_Hypervisor_Installation_Failed", IPMI_INTERPRET_STATE_CRITICAL},
   };
-static unsigned int ipmi_interpret_sensor_os_boot_config_len = 8;
+static unsigned int ipmi_interpret_sensor_os_boot_config_len = 12;
 
 static struct ipmi_interpret_sensor_config ipmi_interpret_sensor_os_critical_stop_state_config[] =
   {
@@ -1208,7 +1215,7 @@ _interpret_sensor_oem_supermicro_discrete_cpu_temp (ipmi_interpret_ctx_t ctx)
   
   /* Supermicro CPU Temperature Sensor
    * X7DBR-3/X7DB8/X8DTN/X7SBI-LN4/X8DTH/X8DTG/X8DTU/X8DT3-LN4F/X8DTU-6+/X8DTL/X8DTL-3F
-   * X8SIL-F/X9SCL/X9SCM/X8DTN+-F/X8SIE/X9SCA-F-O/H8DGU-F/X9DRi-F/X9DRI-LN4F+/X9SPU-F-O/X9SCM-iiF
+   * X8SIL-F/X9SCL/X9SCM/X8DTN+-F/X8SIE/X9SCA-F-O/H8DGU-F/X9DRi-F/X9DRI-LN4F+/X9SPU-F-O/X9SCM-iiF/H8SGL-F
    *
    * Manufacturer ID = 10876 (Supermicro), 10437 (Peppercon, IPMI card manufacturer),
    *                   47488 (Supermicro, not IANA number, special case)
@@ -1217,7 +1224,7 @@ _interpret_sensor_oem_supermicro_discrete_cpu_temp (ipmi_interpret_ctx_t ctx)
    *              1549 (X8DTU-6+ / X8DTU_6PLUS), 6 (X8DTL, X8DTL-3F / X8DTL_3F), 1541 (X8SIL-F / X8SIL_F), 1572 (X9SCL, X9SCM),
    *              1551 (X8DTN+-F / X8DTNPLUS_F), 1037 (X8SIE), 1585 (X9SCA-F-O / X9SCA_F_O), 43025 (H8DGU-F / H8DGU_F),
    *              1576 (X9DRi-F, X9DRI_F), 1574 (X9DRI-LN4F+ / X9DRI_LN4F_PLUS), 1603 (X9SPU-F-O / X9SPU_F_O),
-   *              1600 (X9SCM-iiF / X9SCM_IIF)
+   *              1600 (X9SCM-iiF / X9SCM_IIF), 42769 (H8SGL-F / H8SGL_F)
    * Event/Reading Type Code = 70h (OEM)
    * Sensor Type = C0h (OEM)
    * Value 0x0000 = "Low"
@@ -1303,8 +1310,23 @@ _interpret_sensor_oem_supermicro_discrete_cpu_temp (ipmi_interpret_ctx_t ctx)
     return (-1);
 
   if (_interpret_sensor_oem_supermicro_discrete_cpu_temp_wrapper (ctx,
-								  IPMI_IANA_ENTERPRISE_ID_MAGNUM_TECHNOLOGIES,
-								  IPMI_SUPERMICRO_PRODUCT_ID_X8DTL_BASE) < 0)
+								  IPMI_IANA_ENTERPRISE_ID_SUPERMICRO_WORKAROUND,
+								  IPMI_SUPERMICRO_PRODUCT_ID_H8DGU) < 0)
+    return (-1);
+
+  if (_interpret_sensor_oem_supermicro_discrete_cpu_temp_wrapper (ctx,
+								  IPMI_IANA_ENTERPRISE_ID_SUPERMICRO_WORKAROUND,
+								  IPMI_SUPERMICRO_PRODUCT_ID_H8DG6) < 0)
+    return (-1);
+
+  if (_interpret_sensor_oem_supermicro_discrete_cpu_temp_wrapper (ctx,
+                                                                  IPMI_IANA_ENTERPRISE_ID_SUPERMICRO_WORKAROUND,
+                                                                  IPMI_SUPERMICRO_PRODUCT_ID_H8SGL_F) < 0)
+    return (-1);
+
+  if (_interpret_sensor_oem_supermicro_discrete_cpu_temp_wrapper (ctx,
+                                                                  IPMI_IANA_ENTERPRISE_ID_MAGNUM_TECHNOLOGIES,
+                                                                  IPMI_SUPERMICRO_PRODUCT_ID_X8DTL_BASE) < 0)
     return (-1);
 
   return (0);
@@ -1370,13 +1392,13 @@ _interpret_sensor_oem_intel_smi_timeout_power_throttled (ipmi_interpret_ctx_t ct
   /* Intel SMI Timeout
    * Intel SR1625
    * Intel S5500WB/Penguin Computing Relion 700
-   * Quanta QSSC-S4R/Appro GB812X-CN (Quanta motherboard maintains Intel manufacturer ID)
+   * Quanta QSSC-S4R/Appro GB812X-CN (Quanta motherboard contains Intel manufacturer ID)
    * Intel S5000PAL
    *
    * and
    *
    * Intel Power Throttled
-   * Quanta QSSC-S4R/Appro GB812X-CN (Quanta motherboard maintains Intel manufacturer ID)
+   * Quanta QSSC-S4R/Appro GB812X-CN (Quanta motherboard contains Intel manufacturer ID)
    *
    * Manufacturer ID = 343 (Intel)
    * Product ID = 62 (Intel SR1625, S5500WB), 64 (Quanta QSSC-S4R), 40 (Intel S5000PAL)

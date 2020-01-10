@@ -25,7 +25,7 @@ is not enabled or not owned by a BMC.  Please see
 by a BMC.  Sensors may output a sensor event of "Unknown" if the
 sensor reading cannot be read.  This is typical of a sensor that is
 busy or a reading that cannot be calculated.  If sensors report
-"Unrecognized State", it is indicative of an unkown sensor type,
+"Unrecognized State", it is indicative of an unknown sensor type,
 typically an OEM sensor.  If the sensor OEM interpretation is
 available, the \fB\-\-interpret\-oem\-data\fR may be able to report
 the appropriate sensor state.  Sensors need not always report a sensor
@@ -34,7 +34,7 @@ reported.
 
 #include <@top_srcdir@/man/manpage-common-table-of-contents.man>
 To perform IPMI sensor configuration, please see
-.B ipmi-sensors-config(8).
+.B ipmi-config(8).
 To perform some advanced SDR management, please see
 .B bmc-device(8).
 
@@ -175,6 +175,8 @@ tool.  Newer options may not be applicable to legacy output.
 #include <@top_srcdir@/man/manpage-common-sdr-cache-options-heading.man>
 #include <@top_srcdir@/man/manpage-common-sdr-cache-options.man>
 #include <@top_srcdir@/man/manpage-common-sdr-cache-file-directory.man>
+#include <@top_srcdir@/man/manpage-common-time-options-heading.man>
+#include <@top_srcdir@/man/manpage-common-time-options.man>
 #include <@top_srcdir@/man/manpage-common-hostranged-options-header.man>
 #include <@top_srcdir@/man/manpage-common-hostranged-buffer.man>
 #include <@top_srcdir@/man/manpage-common-hostranged-consolidate.man>
@@ -252,13 +254,14 @@ the \fB\-\-bridge\-sensors\fR is used.)
 Dell Poweredge R210, Dell Poweredge R610, Dell Poweredge R710, Dell
 Poweredge R720, Fujitsu iRMC S1 and iRMC S2 systems, HP Proliant DL160
 G8, Intel S5500WB/Penguin Computing Relion 700, Intel S2600JF/Appro
-512X, Intel S5000PAL, Supermicro X7DBR-3, Supermicro X7DB8, Supermicro
-X8DTN, Supermicro X7SBI-LN4, Supermicro X8DTH, Supermicro X8DTG,
-Supermicro X8DTU, Supermicro X8DT3-LN4F, Supermicro X8DTU-6+,
-Supermicro X8DTL, Supermicro X8DTL-3F, Supermicro X8SIL-F, Supermicro
-X9SCL, Supermicro X9SCM, Supermicro X8DTN+-F, Supermicro X8SIE,
-Supermicro X9SCA-F-O, Supermicro H8DGU-F, Supermicro X9DRi-F,
-Supermicro X9DRI-LN4F+, Supermicro X9SPU-F-O, Supermicro X9SCM-iiF,
+512X, Intel S5000PAL, Intel Windmill, Quanta Winterfell, Supermicro
+X7DBR-3, Supermicro X7DB8, Supermicro X8DTN, Supermicro X7SBI-LN4,
+Supermicro X8DTH, Supermicro X8DTG, Supermicro X8DTU, Supermicro
+X8DT3-LN4F, Supermicro X8DTU-6+, Supermicro X8DTL, Supermicro
+X8DTL-3F, Supermicro X8SIL-F, Supermicro X9SCL, Supermicro X9SCM,
+Supermicro X8DTN+-F, Supermicro X8SIE, Supermicro X9SCA-F-O,
+Supermicro H8DGU-F, Supermicro X9DRi-F, Supermicro X9DRI-LN4F+,
+Supermicro X9SPU-F-O, Supermicro X9SCM-iiF, Wiwynn Windmill,
 Wistron/Dell Poweredge C6220.
 .SH "EXAMPLES"
 .B # ipmi-sensors 
@@ -296,9 +299,9 @@ or \fB\-\-bridge\-sensors\fR options.
 
 #include <@top_srcdir@/man/manpage-common-reporting-bugs.man>
 .SH "COPYRIGHT"
-Copyright \(co 2003-2012 FreeIPMI Core Team.  
+Copyright \(co 2003-2015 FreeIPMI Core Team.  
 #include <@top_srcdir@/man/manpage-common-gpl-program-text.man>
 .SH "SEE ALSO"
-freeipmi(7), bmc-config(8), bmc-device(8), ipmi-sensors-config(8),
+freeipmi(7), bmc-device(8), ipmi-config(8),
 freeipmi_interpret_sensor.conf(5)
 #include <@top_srcdir@/man/manpage-common-homepage.man>

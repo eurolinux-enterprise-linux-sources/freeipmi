@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,20 @@ extern "C" {
  * response.
  *
  */
+
+int ipmi_cmd_get_device_sdr_info (ipmi_ctx_t ctx,
+				  uint8_t operation,
+				  fiid_obj_t obj_cmd_rs);
+
+int ipmi_cmd_get_device_sdr (ipmi_ctx_t ctx,
+			     uint16_t reservation_id,
+			     uint16_t record_id,
+			     uint8_t offset_into_record,
+			     uint8_t bytes_to_read,
+			     fiid_obj_t obj_cmd_rs);
+
+int ipmi_cmd_reserve_device_sdr_repository (ipmi_ctx_t ctx,
+					    fiid_obj_t obj_cmd_rs);
 
 /* achu: as of IPMI 2.0 hysteresis_mask reserved for future - write as 0xFF */
 int ipmi_cmd_set_sensor_hysteresis (ipmi_ctx_t ctx,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ extern "C" {
  * iRMC S1 / iRMC S2
  */
 #define IPMI_FUJITSU_PRODUCT_ID_MIN                 0x0200
-#define IPMI_FUJITSU_PRODUCT_ID_MAX                 0x03FF
+#define IPMI_FUJITSU_PRODUCT_ID_MAX                 0x05FF
 
 // iRMC-S1 based systems        
 #define IPMI_FUJITSU_PRODUCT_ID_TX200S3             0x0200
@@ -143,6 +143,12 @@ extern "C" {
 
 #define IPMI_INTEL_PRODUCT_ID_S5000PAL 40
 
+#define IPMI_INTEL_PRODUCT_ID_WINDMILL 2818
+
+#define IPMI_INTEL_PRODUCT_ID_S2600KP  111
+#define IPMI_INTEL_PRODUCT_ID_S2600WT2 112
+#define IPMI_INTEL_PRODUCT_ID_S2600WTT 112
+
 /* 
  * Intel derived
  */
@@ -154,6 +160,10 @@ extern "C" {
 #define IPMI_APPRO_PRODUCT_ID_512X IPMI_INTEL_PRODUCT_ID_S2600JF
 
 #define IPMI_APPRO_PRODUCT_ID_QG812X_CN IPMI_INTEL_PRODUCT_ID_QUANTA_QSSC_S4R
+
+#define IPMI_QUANTA_PRODUCT_ID_WINTERFELL IPMI_INTEL_PRODUCT_ID_WINDMILL
+
+#define IPMI_WIWYNN_PRODUCT_ID_WINDMILL IPMI_INTEL_PRODUCT_ID_WINDMILL
 
 /*******************************************
  * IBM                                     *
@@ -175,6 +185,12 @@ extern "C" {
 
 #define IPMI_DELL_PRODUCT_ID_XANADU_II  IPMI_INVENTEC_PRODUCT_ID_5441
 #define IPMI_DELL_PRODUCT_ID_XANADU_III IPMI_INVENTEC_PRODUCT_ID_5442
+
+/******************************************* 
+ * Gigabyte                                *
+ *******************************************/
+
+#define IPMI_GIGABYTE_PRODUCT_ID_MD90_FS0_ZB 266
 
 /******************************************* 
  * Quanta                                *
@@ -206,6 +222,11 @@ extern "C" {
 #define IPMI_SUPERMICRO_PRODUCT_ID_X8DTN           IPMI_SUPERMICRO_PRODUCT_ID_FOUR_BASE
 #define IPMI_SUPERMICRO_PRODUCT_ID_X7SBI_LN4       IPMI_SUPERMICRO_PRODUCT_ID_FOUR_BASE
 
+#define IPMI_SUPERMICRO_PRODUCT_ID_PEPPERCON_X7DBR_3    IPMI_SUPERMICRO_PRODUCT_ID_X7DBR_3
+#define IPMI_SUPERMICRO_PRODUCT_ID_PEPPERCON_X7DB8      IPMI_SUPERMICRO_PRODUCT_ID_X7DB8
+#define IPMI_SUPERMICRO_PRODUCT_ID_PEPPERCON_X8DTN      IPMI_SUPERMICRO_PRODUCT_ID_X8DTN
+#define IPMI_SUPERMICRO_PRODUCT_ID_PEPPERCON_X7SBI_LN4  IPMI_SUPERMICRO_PRODUCT_ID_X7SBI_LN4
+
 /* Seen in the wild w/ Supermicro workaround IANA number 47488 */
 #define IPMI_SUPERMICRO_PRODUCT_ID_X8DT_BASE       43707
 #define IPMI_SUPERMICRO_PRODUCT_ID_X8DTH           IPMI_SUPERMICRO_PRODUCT_ID_X8DT_BASE
@@ -227,7 +248,10 @@ extern "C" {
 #define IPMI_SUPERMICRO_PRODUCT_ID_X8SIE           1037
 #define IPMI_SUPERMICRO_PRODUCT_ID_X9SCA_F_O       1585
 #define IPMI_SUPERMICRO_PRODUCT_ID_H8DGU_F         43025
+#define IPMI_SUPERMICRO_PRODUCT_ID_H8DG6           48145
+#define IPMI_SUPERMICRO_PRODUCT_ID_H8DGU           4520
 #define IPMI_SUPERMICRO_PRODUCT_ID_X9DRI_LN4F_PLUS 1574
+#define IPMI_SUPERMICRO_PRODUCT_ID_H8SGL_F         42769
 
 /* Seen in the wild w/ proper IANA number 10876 */
 /* defined above: IPMI_SUPERMICRO_PRODUCT_ID_X9SCM */
@@ -236,7 +260,7 @@ extern "C" {
 #define IPMI_SUPERMICRO_PRODUCT_ID_X9SCM_IIF   1600
 
 /* Seen in the wild w/ Magnum Technologies IANA number 5593 */
-/* defined above: IPMI_SUPERMICRO_PRODUCT_ID_X8DTL */
+#define IPMI_SUPERMICRO_PRODUCT_ID_MAGNUM_TECHNOLOGIES_X8DTL IPMI_SUPERMICRO_PRODUCT_ID_X8DTL
 
 /******************************************* 
  * Wistron                                 *

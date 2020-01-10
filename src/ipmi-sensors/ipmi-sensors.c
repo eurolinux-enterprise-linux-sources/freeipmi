@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,6 +58,8 @@
 
 #define IPMI_SENSORS_MESSAGE_LENGTH 1024
 
+#define IPMI_SENSORS_TIME_BUFLEN    512
+
 static int
 _sdr_repository_info (ipmi_sensors_state_data_t *state_data)
 {
@@ -65,9 +67,7 @@ _sdr_repository_info (ipmi_sensors_state_data_t *state_data)
   uint8_t major, minor;
   uint16_t record_count, free_space;
   uint64_t val;
-  char timestr[512];
-  time_t t;
-  struct tm tmp;
+  char timestr[IPMI_SENSORS_TIME_BUFLEN + 1];
   char *str;
   int rv = -1;
   uint8_t allocation_supported = 0;
@@ -154,15 +154,23 @@ _sdr_repository_info (ipmi_sensors_state_data_t *state_data)
       goto cleanup;
     }
 
-  /* Posix says individual calls need not clear/set all portions of
-   * 'struct tm', thus passing 'struct tm' between functions could
-   * have issues.  So we need to memset.
-   */
-  memset (&tmp, '\0', sizeof(struct tm));
+  memset (timestr, '\0', IPMI_SENSORS_TIME_BUFLEN + 1);
+  
+  if (ipmi_timestamp_string ((uint32_t)val,
+			     state_data->prog_data->args->common_args.utc_offset,
+			     get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						  IPMI_TIMESTAMP_FLAG_DEFAULT), 
+			     "%m/%d/%Y - %H:%M:%S",
+			     timestr,
+			     IPMI_SENSORS_TIME_BUFLEN) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "ipmi_timestamp_string: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
 
-  t = val;
-  localtime_r (&t, &tmp);
-  strftime (timestr, sizeof (timestr), "%m/%d/%Y - %H:%M:%S", &tmp);
   pstdout_printf (state_data->pstate,
                   "Most recent addition timestamp                    : %s\n",
                   timestr);
@@ -176,15 +184,23 @@ _sdr_repository_info (ipmi_sensors_state_data_t *state_data)
       goto cleanup;
     }
 
-  /* Posix says individual calls need not clear/set all portions of
-   * 'struct tm', thus passing 'struct tm' between functions could
-   * have issues.  So we need to memset.
-   */
-  memset (&tmp, '\0', sizeof(struct tm));
+  memset (timestr, '\0', IPMI_SENSORS_TIME_BUFLEN + 1);
+  
+  if (ipmi_timestamp_string ((uint32_t)val,
+			     state_data->prog_data->args->common_args.utc_offset,
+			     get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						  IPMI_TIMESTAMP_FLAG_DEFAULT), 
+			     "%m/%d/%Y - %H:%M:%S",
+			     timestr,
+			     IPMI_SENSORS_TIME_BUFLEN) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "ipmi_timestamp_string: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
 
-  t = val;
-  localtime_r (&t, &tmp);
-  strftime (timestr, sizeof (timestr), "%m/%d/%Y - %H:%M:%S", &tmp);
   pstdout_printf (state_data->pstate,
                   "Most recent erase timestamp                       : %s\n",
                   timestr);
@@ -499,6 +515,15 @@ _calculate_record_ids (ipmi_sensors_state_data_t *state_data,
           
           output_record_ids[(*output_record_ids_length)] = record_id;
           (*output_record_ids_length)++;
+
+	  if ((*output_record_ids_length) >= MAX_SENSOR_RECORD_IDS)
+	    {
+	      pstdout_fprintf (state_data->pstate,
+			       stderr,
+			       "Too many sensors found on system; limit is %u\n",
+			       MAX_SENSOR_RECORD_IDS);
+	      return (-1);
+	    }
         }
     }
   else if (state_data->prog_data->args->record_ids_length)
@@ -557,6 +582,15 @@ _calculate_record_ids (ipmi_sensors_state_data_t *state_data,
           
           output_record_ids[(*output_record_ids_length)] = state_data->prog_data->args->record_ids[i];
           (*output_record_ids_length)++;
+
+	  if ((*output_record_ids_length) >= MAX_SENSOR_RECORD_IDS)
+	    {
+	      pstdout_fprintf (state_data->pstate,
+			       stderr,
+			       "Too many sensors specified; limit is %u\n",
+			       MAX_SENSOR_RECORD_IDS);
+	      return (-1);
+	    }
         }
     }
   else /* state_data->prog_data->args->sensor_types_length */
@@ -618,6 +652,15 @@ _calculate_record_ids (ipmi_sensors_state_data_t *state_data,
           
           output_record_ids[(*output_record_ids_length)] = record_id;
           (*output_record_ids_length)++;
+	  
+	  if ((*output_record_ids_length) >= MAX_SENSOR_RECORD_IDS)
+	    {
+	      pstdout_fprintf (state_data->pstate,
+			       stderr,
+			       "Too many sensors found on system; limit is %u\n",
+			       MAX_SENSOR_RECORD_IDS);
+	      return (-1);
+	    }
         }
     }
 
@@ -769,6 +812,7 @@ _get_event_message (ipmi_sensors_state_data_t *state_data,
                     unsigned int *event_message_list_len)
 {
   uint8_t sensor_type;
+  uint8_t sensor_number;
   uint8_t event_reading_type_code;
   uint32_t manufacturer_id = 0;
   uint16_t product_id = 0;
@@ -787,6 +831,18 @@ _get_event_message (ipmi_sensors_state_data_t *state_data,
       pstdout_fprintf (state_data->pstate,
                        stderr,
                        "ipmi_sdr_parse_sensor_type: %s\n",
+                       ipmi_sdr_ctx_errormsg (state_data->sdr_ctx));
+      goto cleanup;
+    }
+
+  if (ipmi_sdr_parse_sensor_number (state_data->sdr_ctx,
+				    NULL,
+				    0,
+				    &sensor_number) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "ipmi_sdr_parse_sensor_number: %s\n",
                        ipmi_sdr_ctx_errormsg (state_data->sdr_ctx));
       goto cleanup;
     }
@@ -820,6 +876,7 @@ _get_event_message (ipmi_sensors_state_data_t *state_data,
 
   if (ipmi_get_event_messages (event_reading_type_code,
                                sensor_type,
+			       sensor_number,
                                sensor_event_bitmask,
                                manufacturer_id,
                                product_id,
@@ -1077,6 +1134,14 @@ _display_sensors (ipmi_sensors_state_data_t *state_data)
               goto cleanup;
             }
 
+	  /* achu:
+	   *
+	   * In Intel NM 2.0 specification, sensor numbers are now fixed and you
+	   * don't have to search the SDR for them.  We could check version of
+	   * NM on motherboard to determine if we need to search SDR or not, but
+	   * for time being we'll stick to the search SDR method b/c it will
+	   * always work.
+	   */
           for (i = 0; i < record_count; i++, ipmi_sdr_cache_next (state_data->sdr_ctx))
             {
               if ((ret = ipmi_sdr_oem_parse_intel_node_manager (state_data->sdr_ctx,

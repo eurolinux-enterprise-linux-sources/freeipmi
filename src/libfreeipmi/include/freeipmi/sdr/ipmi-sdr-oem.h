@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,37 +23,9 @@
 extern "C" {
 #endif
 
-/*******************************************
- * Intel                                   *
- *******************************************/
+#warning ipmi-sdr-oem.h header file is deprecated
 
-/*
- * Intel Node Manager
- *
- * For Intel Chips, not just Intel Motherboards.  Confirmed for:
- *
- * Intel S5500WB/Penguin Computing Relion 700
- * Intel S2600JF/Appro 512X
- * Inventec 5441/Dell Xanadu II
- * Inventec 5442/Dell Xanadu III
- * Quanta S99Q/Dell FS12-TY
- * Quanta QSSC-S4R/Appro GB812X-CN
- */
-
-/* return (1) - is oem intel node manager, fully parsed
- * return (0) - is not oem intel node manager
- * return (-1) - error
- */
-int ipmi_sdr_oem_parse_intel_node_manager (ipmi_sdr_ctx_t ctx,
-					   const void *sdr_record,
-					   unsigned int sdr_record_len,
-					   uint8_t *nm_device_slave_address,
-                                           uint8_t *sensor_owner_lun,
-                                           uint8_t *channel_number,
-                                           uint8_t *nm_health_event_sensor_number,
-                                           uint8_t *nm_exception_event_sensor_number,
-                                           uint8_t *nm_operational_capabilities_sensor_number,
-                                           uint8_t *nm_alert_threshold_exceeded_sensor_number);
+#include <freeipmi/sdr/oem/ipmi-sdr-oem-intel-node-manager.h>
 
 #ifdef __cplusplus
 }

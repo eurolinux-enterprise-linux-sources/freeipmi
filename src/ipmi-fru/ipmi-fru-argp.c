@@ -1,7 +1,7 @@
 /***************************************************************************** \
  *  $Id: ipmi-fru-argp.c,v 1.33 2010-02-08 22:20:58 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -42,6 +42,9 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif /* HAVE_FCNTL_H */
 #include <assert.h>
 #include <errno.h>
 
@@ -54,7 +57,7 @@
 
 const char *argp_program_version =
   "ipmi-fru - " PACKAGE_VERSION "\n"
-  "Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.\n"
+  "Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.\n"
   "Copyright (C) 2007 The Regents of the University of California.\n"
   "This program is free software; you may redistribute it under the terms of\n"
   "the GNU General Public License.  This program has absolutely no warranty.";
@@ -80,6 +83,7 @@ static struct argp_option cmdline_options[] =
     ARGP_COMMON_SDR_CACHE_OPTIONS,
     ARGP_COMMON_SDR_CACHE_OPTIONS_FILE_DIRECTORY,
     ARGP_COMMON_SDR_CACHE_OPTIONS_IGNORE,
+    ARGP_COMMON_TIME_OPTIONS,
     ARGP_COMMON_HOSTRANGED_OPTIONS,
     ARGP_COMMON_OPTIONS_DEBUG,
     { "device-id", DEVICE_ID_KEY, "DEVICE_ID", 0,
@@ -93,6 +97,8 @@ static struct argp_option cmdline_options[] =
       "Bridge to read FRU entries on other controllers", 43},
     { "interpret-oem-data", INTERPRET_OEM_DATA, NULL, 0,
       "Attempt to interpret OEM data.", 44},
+    { "fru-file", FRU_FILE_KEY, "FILENAME", 0,
+      "Output from specified FRU binary file.", 45},
     { NULL, 0, NULL, 0, NULL, 0}
   };
 
@@ -154,6 +160,9 @@ cmdline_parse (int key, char *arg, struct argp_state *state)
     case INTERPRET_OEM_DATA:
       cmd_args->interpret_oem_data = 1;
       break;
+    case FRU_FILE_KEY:
+      cmd_args->fru_file = arg;
+      break;
     case ARGP_KEY_ARG:
       /* Too many arguments. */
       argp_usage (state);
@@ -181,7 +190,7 @@ _ipmi_fru_config_file_parse (struct ipmi_fru_arguments *cmd_args)
   if (config_file_parse (cmd_args->common_args.config_file,
                          0,
                          &(cmd_args->common_args),
-                         CONFIG_FILE_INBAND | CONFIG_FILE_OUTOFBAND | CONFIG_FILE_SDR | CONFIG_FILE_HOSTRANGE,
+                         CONFIG_FILE_INBAND | CONFIG_FILE_OUTOFBAND | CONFIG_FILE_SDR | CONFIG_FILE_TIME | CONFIG_FILE_HOSTRANGE,
                          CONFIG_FILE_TOOL_IPMI_FRU,
                          &config_file_data) < 0)
     {
@@ -200,6 +209,22 @@ _ipmi_fru_config_file_parse (struct ipmi_fru_arguments *cmd_args)
     cmd_args->interpret_oem_data = config_file_data.interpret_oem_data;
 }
 
+static void
+_ipmi_fru_args_validate (struct ipmi_fru_arguments *cmd_args)
+{
+  if (cmd_args->fru_file)
+    {
+      if (access (cmd_args->fru_file, R_OK) < 0)
+	{
+	  fprintf (stderr,
+		   "Cannot read '%s': %s\n",
+		   cmd_args->fru_file,
+		   strerror (errno));
+	  exit (EXIT_FAILURE);
+	}
+    }
+}
+
 void
 ipmi_fru_argp_parse (int argc, char **argv, struct ipmi_fru_arguments *cmd_args)
 {
@@ -216,6 +241,7 @@ ipmi_fru_argp_parse (int argc, char **argv, struct ipmi_fru_arguments *cmd_args)
   cmd_args->skip_checks = 0;
   cmd_args->bridge_fru = 0;
   cmd_args->interpret_oem_data = 0;
+  cmd_args->fru_file = NULL;
 
   argp_parse (&cmdline_config_file_argp,
               argc,
@@ -233,4 +259,5 @@ ipmi_fru_argp_parse (int argc, char **argv, struct ipmi_fru_arguments *cmd_args)
               cmd_args);
 
   verify_common_cmd_args (&(cmd_args->common_args));
+  _ipmi_fru_args_validate (cmd_args);
 }

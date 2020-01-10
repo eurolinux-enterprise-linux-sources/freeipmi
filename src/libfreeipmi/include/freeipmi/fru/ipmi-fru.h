@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,6 +61,12 @@ extern "C" {
 #define IPMI_FRU_FLAGS_DEBUG_DUMP                           0x0001
 #define IPMI_FRU_FLAGS_SKIP_CHECKSUM_CHECKS                 0x0002
 #define IPMI_FRU_FLAGS_INTERPRET_OEM_DATA                   0x0004
+/* Do not parse FRU inventory information like normal
+ * - iterator functions no longer serve purpose
+ * - ipmi_fru_read_data_area will read as much data as in 
+ *   can into buffer.
+ */
+#define IPMI_FRU_FLAGS_READ_RAW                             0x0008
 
 #define IPMI_FRU_AREA_TYPE_CHASSIS_INFO_AREA                          0
 #define IPMI_FRU_AREA_TYPE_BOARD_INFO_AREA                            1
@@ -71,8 +77,15 @@ extern "C" {
 #define IPMI_FRU_AREA_TYPE_MULTIRECORD_MANAGEMENT_ACCESS_RECORD       6
 #define IPMI_FRU_AREA_TYPE_MULTIRECORD_BASE_COMPATABILITY_RECORD      7
 #define IPMI_FRU_AREA_TYPE_MULTIRECORD_EXTENDED_COMPATABILITY_RECORD  8
-#define IPMI_FRU_AREA_TYPE_MULTIRECORD_OEM                            9
-#define IPMI_FRU_AREA_TYPE_MULTIRECORD_UNKNOWN                       10
+#define IPMI_FRU_AREA_TYPE_MULTIRECORD_ASF_FIXED_SMBUS_DEVICE_RECORD  9
+#define IPMI_FRU_AREA_TYPE_MULTIRECORD_ASF_LEGACY_DEVICE_ALERTS      10
+#define IPMI_FRU_AREA_TYPE_MULTIRECORD_ASF_REMOTE_CONTROL            11
+#define IPMI_FRU_AREA_TYPE_MULTIRECORD_EXTENDED_DC_OUTPUT            12
+#define IPMI_FRU_AREA_TYPE_MULTIRECORD_EXTENDED_DC_LOAD              13
+#define IPMI_FRU_AREA_TYPE_MULTIRECORD_NVM_EXPRESS                   14
+#define IPMI_FRU_AREA_TYPE_MULTIRECORD_OEM                           15
+#define IPMI_FRU_AREA_TYPE_MULTIRECORD_UNKNOWN                       16
+#define IPMI_FRU_AREA_TYPE_RAW_DATA                                  17
 
 /* multirecord length field is 1 byte => max 256 chars.  Round up to
  * 512 for good measure.
@@ -127,6 +140,11 @@ int ipmi_fru_ctx_set_debug_prefix (ipmi_fru_ctx_t ctx, const char *debug_prefix)
 int ipmi_fru_open_device_id (ipmi_fru_ctx_t ctx, uint8_t fru_device_id);
 int ipmi_fru_close_device_id (ipmi_fru_ctx_t ctx);
 
+/* Identical to ipmi_fru_open_device_id, but do not read from IPMI, use data in buffer */
+int ipmi_fru_open_device_id_with_buffer (ipmi_fru_ctx_t ctx, 
+					 const void *areabuf,
+					 unsigned int areabuflen);
+
 /* FRU data iterator functions */
 int ipmi_fru_first (ipmi_fru_ctx_t ctx);
 /* returns 1 if iterator can continue, 0 if at end, -1 on error */
@@ -134,6 +152,10 @@ int ipmi_fru_next (ipmi_fru_ctx_t ctx);
 
 /* area read will not include record headers */
 /* utiliize area_type and area_length in/out parameters for later parsing */
+/* if reading in raw mode, read as much data as you can into buffer
+ * - area_length will return total size of data that exists
+ * - area_type will return IPMI_FRU_AREA_TYPE_RAW_DATA
+ */
 int ipmi_fru_read_data_area (ipmi_fru_ctx_t ctx,
 			     unsigned int *area_type,
 			     unsigned int *area_length,
@@ -185,6 +207,7 @@ int ipmi_fru_product_info_area (ipmi_fru_ctx_t ctx,
 				unsigned int product_custom_fields_len);
 
 /* 10 mV multipliers factored in return voltages */
+/* FRU Revision 1.2 renamed ac_dropout_tolerance to input_dropout_tolerance, are identical */
 int ipmi_fru_multirecord_power_supply_information (ipmi_fru_ctx_t ctx,
 						   const void *areabuf,
 						   unsigned int areabuflen,
@@ -192,10 +215,10 @@ int ipmi_fru_multirecord_power_supply_information (ipmi_fru_ctx_t ctx,
 						   unsigned int *peak_va,
 						   unsigned int *inrush_current,
 						   unsigned int *inrush_interval,
-						   unsigned int *low_end_input_voltage_range_1,
-						   unsigned int *high_end_input_voltage_range_1,
-						   unsigned int *low_end_input_voltage_range_2,
-						   unsigned int *high_end_input_voltage_range_2,
+						   int *low_end_input_voltage_range_1,
+						   int *high_end_input_voltage_range_1,
+						   int *low_end_input_voltage_range_2,
+						   int *high_end_input_voltage_range_2,
 						   unsigned int *low_end_input_frequency_range,
 						   unsigned int *high_end_input_frequency_range,
 						   unsigned int *ac_dropout_tolerance,
@@ -263,6 +286,36 @@ int ipmi_fru_multirecord_extended_compatibility_record (ipmi_fru_ctx_t ctx,
 							unsigned int *compatibility_code_start_value,
 							uint8_t *code_range_mask,
 							unsigned int *code_range_mask_len);
+
+/* 10 mV multipliers factored in return voltages */
+/* draw in mA units, already factoring in current_units */
+int ipmi_fru_multirecord_extended_dc_output (ipmi_fru_ctx_t ctx,
+					     const void *areabuf,
+					     unsigned int areabuflen,
+					     unsigned int *output_number,
+					     unsigned int *current_units,
+					     unsigned int *standby,
+					     int *nominal_voltage,
+					     int *maximum_negative_voltage_deviation,
+					     int *maximum_positive_voltage_deviation,
+					     unsigned int *ripple_and_noise_pk_pk,
+					     unsigned int *minimum_current_draw,
+					     unsigned int *maximum_current_draw);
+
+/* 10 mV multipliers factored in return voltages */
+/* load in mA units, already factoring in current_units */
+int ipmi_fru_multirecord_extended_dc_load (ipmi_fru_ctx_t ctx,
+					   const void *areabuf,
+					   unsigned int areabuflen,
+					   unsigned int *output_number,
+					   unsigned int *current_units,
+					   unsigned int *standby,
+					   int *nominal_voltage,
+					   int *specd_minimum_voltage,
+					   int *specd_maximum_voltage,
+					   unsigned int *specd_ripple_and_noise_pk_pk,
+					   unsigned int *minimum_current_load,
+					   unsigned int *maximum_current_load);
 
 int ipmi_fru_multirecord_oem_record (ipmi_fru_ctx_t ctx,
 				     const void *areabuf,

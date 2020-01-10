@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,21 +44,23 @@
 
 #define IPMI_SEL_RESERVATION_ID_RETRY         4
 
-#define IPMI_SEL_FLAGS_MASK                    \
-  (IPMI_SEL_FLAGS_DEBUG_DUMP                   \
+#define IPMI_SEL_FLAGS_MASK			\
+  (IPMI_SEL_FLAGS_DEBUG_DUMP			\
    | IPMI_SEL_FLAGS_ASSUME_SYTEM_EVENT_RECORDS)
 
 #define IPMI_SEL_SEPARATOR_STRING     " | "
 
-#define IPMI_SEL_STRING_FLAGS_MASK                  \
-  (IPMI_SEL_STRING_FLAGS_VERBOSE                    \
-   | IPMI_SEL_STRING_FLAGS_IGNORE_UNAVAILABLE_FIELD \
-   | IPMI_SEL_STRING_FLAGS_OUTPUT_NOT_AVAILABLE     \
-   | IPMI_SEL_STRING_FLAGS_DATE_USE_SLASH           \
-   | IPMI_SEL_STRING_FLAGS_DATE_MONTH_STRING        \
-   | IPMI_SEL_STRING_FLAGS_NON_ABBREVIATED_UNITS    \
-   | IPMI_SEL_STRING_FLAGS_ENTITY_SENSOR_NAMES      \
-   | IPMI_SEL_STRING_FLAGS_INTERPRET_OEM_DATA       \
+#define IPMI_SEL_STRING_FLAGS_MASK			\
+  (IPMI_SEL_STRING_FLAGS_VERBOSE			\
+   | IPMI_SEL_STRING_FLAGS_IGNORE_UNAVAILABLE_FIELD	\
+   | IPMI_SEL_STRING_FLAGS_OUTPUT_NOT_AVAILABLE		\
+   | IPMI_SEL_STRING_FLAGS_DATE_USE_SLASH		\
+   | IPMI_SEL_STRING_FLAGS_DATE_MONTH_STRING		\
+   | IPMI_SEL_STRING_FLAGS_NON_ABBREVIATED_UNITS	\
+   | IPMI_SEL_STRING_FLAGS_ENTITY_SENSOR_NAMES		\
+   | IPMI_SEL_STRING_FLAGS_INTERPRET_OEM_DATA		\
+   | IPMI_SEL_STRING_FLAGS_UTC_TO_LOCALTIME		\
+   | IPMI_SEL_STRING_FLAGS_LOCALTIME_TO_UTC		\
    | IPMI_SEL_STRING_FLAGS_LEGACY)
 
 struct ipmi_sel_entry {
@@ -92,6 +94,7 @@ struct ipmi_sel_ctx {
   ipmi_ctx_t ipmi_ctx;
   ipmi_sdr_ctx_t sdr_ctx;
   ipmi_interpret_ctx_t interpret_ctx;
+  int utc_offset;
 
   int sel_entries_loaded;
   List sel_entries;

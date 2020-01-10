@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,64 +23,11 @@
 extern "C" {
 #endif
 
-/*******************************************
- * Intel                                   *
- *******************************************/
-
-/*
- * Intel S5500WB/Penguin Computing Relion 700
- */
-#define IPMI_GENERATOR_ID_OEM_INTEL_BIOS_SMI_HANDLER   0x33
-#define IPMI_GENERATOR_ID_OEM_INTEL_ME_FIRMWARE        0x2C
-#define IPMI_GENERATOR_ID_OEM_INTEL_HSC_FIRMWARE       0xC0
-
-/*
- * Quanta QSSC-S4R/Appro GB812X-CN
- * (Quanta motherboard maintains Intel manufacturer ID)
- */
-#define IPMI_GENERATOR_ID_OEM_INTEL_QUANTA_QSSC_S4R_BIOS_POST 0x33
-
-/*
- * Intel S2600JF/Appro 512X
- */
-#define IPMI_GENERATOR_ID_OEM_INTEL_S2600JF_BIOS_POST          0x01
-#define IPMI_GENERATOR_ID_OEM_INTEL_S2600JF_BIOS_SMI_HANDLER   0x33
-
-/*******************************************
- * Inventec                                *
- *******************************************/
-
-/*
- * Inventec 5441/Dell Xanadu II
- * Inventec 5442/Dell Xanadu III
- */
-/* achu: not official names, named based on use context */
-#define IPMI_GENERATOR_ID_OEM_INVENTEC_BIOS            0x01
-#define IPMI_GENERATOR_ID_OEM_INVENTEC_SMI             0x21
-#define IPMI_GENERATOR_ID_OEM_INVENTEC_POST_ERROR_CODE 0x31
-
-/*******************************************
- * Quanta                                  *
- *******************************************/
-
-/*
- * Quanta S99Q/Dell FS12-TY
- */
-/* achu: not official names, named based on use context */
-#define IPMI_GENERATOR_ID_OEM_QUANTA_ERROR           0x01
-
-/******************************************* 
- * Wistron                                 *
- *******************************************/
-
-/*
- * Wistron / Dell Poweredge C6220
- */
-
-/* achu: not official names, named based on use context */
-#define IPMI_GENERATOR_ID_OEM_WISTRON_BIOS            0x01
-#define IPMI_GENERATOR_ID_OEM_WISTRON_SMI             0x21
-#define IPMI_GENERATOR_ID_OEM_WISTRON_ME              0x2C
+#include <freeipmi/spec/oem/ipmi-slave-address-oem-intel-spec.h>
+#include <freeipmi/spec/oem/ipmi-slave-address-oem-inventec-spec.h>
+#include <freeipmi/spec/oem/ipmi-slave-address-oem-linux-kernel-spec.h>
+#include <freeipmi/spec/oem/ipmi-slave-address-oem-quanta-spec.h>
+#include <freeipmi/spec/oem/ipmi-slave-address-oem-wistron-spec.h>
 
 #ifdef __cplusplus
 }

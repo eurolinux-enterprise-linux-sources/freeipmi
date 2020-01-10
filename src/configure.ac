@@ -1,11 +1,11 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([freeipmi],[1.2.9],[freeipmi-devel@gnu.org])
+AC_INIT([freeipmi],[1.5.7],[freeipmi-devel@gnu.org])
 AC_REVISION([$Id: configure.ac,v 1.208 2010-08-06 21:02:29 chu11 Exp $])
 AC_CONFIG_MACRO_DIR([config])
 
 FREEIPMI_PACKAGE_VERSION_MAJOR=1
-FREEIPMI_PACKAGE_VERSION_MINOR=2
-FREEIPMI_PACKAGE_VERSION_PATCH=9
+FREEIPMI_PACKAGE_VERSION_MINOR=5
+FREEIPMI_PACKAGE_VERSION_PATCH=7
 
 AC_SUBST(FREEIPMI_PACKAGE_VERSION_MAJOR)
 AC_SUBST(FREEIPMI_PACKAGE_VERSION_MINOR)
@@ -28,12 +28,10 @@ dnl define output files
 AC_CONFIG_FILES([
 	freeipmi.spec
         Makefile 
-        bmc-config/Makefile
         bmc-device/Makefile
         bmc-info/Makefile
         bmc-watchdog/Makefile 
         common/Makefile 
-        common/configtool/Makefile
         common/debugutil/Makefile
         common/miscutil/Makefile
         common/parsecommon/Makefile
@@ -44,17 +42,15 @@ AC_CONFIG_FILES([
         doc/Makefile 
         etc/Makefile
         ipmi-chassis/Makefile
-        ipmi-chassis-config/Makefile 
+	ipmi-config/Makefile
         ipmi-dcmi/Makefile
         ipmi-fru/Makefile
         ipmi-locate/Makefile
         ipmi-oem/Makefile
-        ipmi-pef-config/Makefile
         ipmi-pet/Makefile
         ipmi-raw/Makefile
         ipmi-sel/Makefile
         ipmi-sensors/Makefile
-        ipmi-sensors-config/Makefile
         ipmiconsole/Makefile
         ipmidetect/Makefile
         ipmidetectd/Makefile
@@ -75,25 +71,22 @@ AC_CONFIG_FILES([
         libipmimonitoring/ipmi_monitoring.h
         libipmimonitoring/libipmimonitoring.pc
         man/Makefile
-        man/bmc-config.8.pre
-        man/bmc-config.conf.5.pre
         man/bmc-device.8.pre
         man/bmc-info.8.pre
         man/bmc-watchdog.8.pre
         man/freeipmi.conf.5.pre
         man/freeipmi.7.pre
         man/ipmi-chassis.8.pre
-        man/ipmi-chassis-config.8.pre
+        man/ipmi-config.8.pre
+        man/ipmi-config.conf.5.pre
 	man/ipmi-dcmi.8.pre
 	man/ipmi-fru.8.pre
 	man/ipmi-locate.8.pre
 	man/ipmi-oem.8.pre
-	man/ipmi-pef-config.8.pre
 	man/ipmi-pet.8.pre
 	man/ipmi-raw.8.pre
 	man/ipmi-sel.8.pre
 	man/ipmi-sensors.8.pre
-	man/ipmi-sensors-config.8.pre
 	man/ipmiconsole.8.pre
 	man/ipmidetect.8.pre
 	man/ipmidetect.conf.5.pre
@@ -130,8 +123,8 @@ AC_SUBST([ISODATE])
 # If any interfaces have been removed or changed since the last public
 # release, then set age to 0.
 #
-LIBFREEIPMI_CURRENT=14
-LIBFREEIPMI_REVISION=7
+LIBFREEIPMI_CURRENT=18
+LIBFREEIPMI_REVISION=4
 LIBFREEIPMI_AGE=1
 
 LIBFREEIPMI_VERSION=$LIBFREEIPMI_CURRENT.$LIBFREEIPMI_REVISION.$LIBFREEIPMI_AGE
@@ -151,9 +144,9 @@ AC_SUBST([LIBFREEIPMI_VERSION_INFO])
 #         incremented due to bug fixes or minor features.  Interfaces are
 #         forward and backward compatible to other PATCH versions.
 
-LIBFREEIPMI_VERSION_MAJOR=3
+LIBFREEIPMI_VERSION_MAJOR=6
 LIBFREEIPMI_VERSION_MINOR=1
-LIBFREEIPMI_VERSION_PATCH=2
+LIBFREEIPMI_VERSION_PATCH=4
 
 AC_SUBST(LIBFREEIPMI_VERSION_MAJOR)
 AC_SUBST(LIBFREEIPMI_VERSION_MINOR)
@@ -174,7 +167,7 @@ AC_SUBST(LIBFREEIPMI_VERSION_PATCH)
 # release, then set age to 0.
 #
 LIBIPMICONSOLE_CURRENT=5
-LIBIPMICONSOLE_REVISION=2
+LIBIPMICONSOLE_REVISION=4
 LIBIPMICONSOLE_AGE=3
 LIBIPMICONSOLE_VERSION_INFO=$LIBIPMICONSOLE_CURRENT:$LIBIPMICONSOLE_REVISION:$LIBIPMICONSOLE_AGE
 AC_SUBST([LIBIPMICONSOLE_VERSION_INFO])
@@ -194,7 +187,7 @@ AC_SUBST([LIBIPMICONSOLE_VERSION_INFO])
 
 LIBIPMICONSOLE_VERSION_MAJOR=1
 LIBIPMICONSOLE_VERSION_MINOR=2
-LIBIPMICONSOLE_VERSION_PATCH=2
+LIBIPMICONSOLE_VERSION_PATCH=4
 
 AC_SUBST(LIBIPMICONSOLE_VERSION_MAJOR)
 AC_SUBST(LIBIPMICONSOLE_VERSION_MINOR)
@@ -214,8 +207,8 @@ AC_SUBST(LIBIPMICONSOLE_VERSION_PATCH)
 # If any interfaces have been removed or changed since the last public
 # release, then set age to 0.
 #
-LIBIPMIMONITORING_CURRENT=5
-LIBIPMIMONITORING_REVISION=5
+LIBIPMIMONITORING_CURRENT=6
+LIBIPMIMONITORING_REVISION=6
 LIBIPMIMONITORING_AGE=0
 LIBIPMIMONITORING_VERSION_INFO=$LIBIPMIMONITORING_CURRENT:$LIBIPMIMONITORING_REVISION:$LIBIPMIMONITORING_AGE
 AC_SUBST([LIBIPMIMONITORING_VERSION_INFO])
@@ -235,7 +228,7 @@ AC_SUBST([LIBIPMIMONITORING_VERSION_INFO])
 
 LIBIPMIMONITORING_VERSION_MAJOR=1
 LIBIPMIMONITORING_VERSION_MINOR=0
-LIBIPMIMONITORING_VERSION_PATCH=5
+LIBIPMIMONITORING_VERSION_PATCH=7
 
 AC_SUBST(LIBIPMIMONITORING_VERSION_MAJOR)
 AC_SUBST(LIBIPMIMONITORING_VERSION_MINOR)
@@ -342,15 +335,27 @@ if test "x${enable_rawdumps}" = "xyes"; then
    AC_DEFINE([WITH_RAWDUMPS], [1], [Define if you want raw dumps])
 fi
 
+INSTALL_DAEMON_SCRIPTS=install-init-scripts
+UNINSTALL_DAEMON_SCRIPTS=uninstall-init-scripts
+
 dnl Option to disable installing init.d scripts
 AC_ARG_ENABLE(init-scripts,
    AC_HELP_STRING([--disable-init-scripts],
       [don\'t install init.d startup scripts]))
-INSTALL_INIT_SCRIPTS=install-init-scripts
 if test x"$enable_init_scripts" = xno; then
-   INSTALL_INIT_SCRIPTS=
+   INSTALL_DAEMON_SCRIPTS=
 fi
-AC_SUBST(INSTALL_INIT_SCRIPTS)
+AC_SUBST(INSTALL_DAEMON_SCRIPTS)
+AC_SUBST(UNINSTALL_DAEMON_SCRIPTS)
+
+# Check for systemd
+RRA_WITH_SYSTEMD_UNITDIR
+if test -n "$with_systemdsystemunitdir" -a x"$with_systemdsystemunitdir" != xno; then
+   INSTALL_DAEMON_SCRIPTS=install-systemd-scripts
+   UNINSTALL_DAEMON_SCRIPTS=uninstall-systemd-scripts
+fi
+AC_SUBST(INSTALL_DAEMON_SCRIPTS)
+AC_SUBST(UNINSTALL_DAEMON_SCRIPTS)
 
 dnl Option to disable creating ipmi sdr cache directory
 AC_ARG_ENABLE([ipmisdrcachedir],
@@ -444,6 +449,7 @@ AC_CHECK_HEADERS([linux/ipmi.h], [], [],
 AC_CHECK_HEADERS([sys/ipmi.h])
 AC_CHECK_HEADERS([sys/int_types.h])
 AC_CHECK_HEADERS([bmc_intf.h])
+AC_CHECK_HEADERS([signal.h])
 
 dnl Checks for library functions.
 AC_FUNC_ALLOCA
@@ -460,6 +466,9 @@ AC_CHECK_FUNCS([flockfile fputs_unlocked fwrite_unlocked])
 AC_CHECK_FUNCS([iopl])
 AC_CHECK_FUNCS([asprintf])
 AC_CHECK_FUNCS([cbrt])
+
+dnl sighandler_t apparently not defined in Apple/OS X
+AC_CHECK_TYPES([sighandler_t], [], [], [[#include <signal.h>]])
 
 # At least on freebsd, putc_unlocked is a macro, so the standard
 # AC_CHECK_FUNCS doesn't work well.
@@ -646,12 +655,12 @@ if test "x$have_argp" = "xyes"; then
          AC_DEFINE([HAVE_ARGP_H], [1], [Define if you have argp.h]),
                    AC_MSG_ERROR([argp header cannot be found]))
 else
-dnl FreeBSD has the argp-standalone package.  If we're on FreeBSD
-dnl make them install the argp-standalone.  On non-FreeBSD, the code
-dnl will fall through and compile the internal FreeIPMI-argp
+dnl FreeBSD and Apple has the argp-standalone package.  If we're on
+dnl FreeBSD or Apple make them install the argp-standalone.  Otherwise
+dnl the code will fall through and compile the internal FreeIPMI-argp
    AC_TRY_COMPILE([#include <sys/param.h>],
                   [
-                   #ifdef __FreeBSD_version
+                   #if defined(__FreeBSD__) || defined(__APPLE__)
                    uncompilable junk syntax %$ # @
                    #endif
                   ],

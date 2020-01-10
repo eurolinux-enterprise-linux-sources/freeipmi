@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmiseld.c,v 1.17 2010-02-08 22:02:30 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2012-2015 Lawrence Livermore National Security, LLC.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
  *  LLNL-CODE-559172
@@ -1381,7 +1381,7 @@ _ipmiseld_poll (void *arg)
   
   if (ipmi_sel_ctx_set_separator (host_data->host_poll->sel_ctx, EVENT_OUTPUT_SEPARATOR) < 0)
     {
-      ipmiseld_err_output (host_data, "ipmi_sel_parse: %s",
+      ipmiseld_err_output (host_data, "ipmi_sel_ctx_set_separator: %s",
 		  ipmi_sel_ctx_errormsg (host_data->host_poll->sel_ctx));
       return (-1);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 FreeIPMI Core Team
+ * Copyright (C) 2008-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,14 @@
 #include <string.h>
 #include <ctype.h>
 #endif /* STDC_HEADERS */
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif /* HAVE_UNISTD_H */
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif /* HAVE_FCNTL_H */
+#include <sys/types.h>
+#include <sys/stat.h>
 #if TIME_WITH_SYS_TIME
 #include <sys/time.h>
 #include <time.h>
@@ -51,6 +59,7 @@
 #include "tool-hostrange-common.h"
 #include "tool-sdr-cache-common.h"
 #include "tool-util-common.h"
+#include "fd.h"
 
 typedef int (*Bmc_device_system_info_first_set)(ipmi_ctx_t ctx,
 						uint8_t set_selector,
@@ -72,6 +81,8 @@ typedef int (*Bmc_device_system_info)(ipmi_ctx_t ctx,
 #define BMC_DEVICE_MAX_PLATFORM_EVENT_ARGS 9
 
 #define BMC_DEVICE_SET_SENSOR_READING_AND_EVENT_STATUS_ARGS 11
+
+#define BMC_DEVICE_TIME_BUFLEN 512
 
 static int
 cold_reset (bmc_device_state_data_t *state_data)
@@ -788,13 +799,49 @@ clear_lan_statistics (bmc_device_state_data_t *state_data)
 }
 
 static int
+parse_check_hex (bmc_device_state_data_t *state_data,
+		 char *from,
+		 char *str,
+		 unsigned int max_len_bytes)
+{
+  unsigned int i;
+
+  assert (state_data);
+  assert (from);
+  assert (str);
+  assert (max_len_bytes);
+
+  for (i = 0; from[i] != '\0'; i++)
+    {
+      if (i >= (max_len_bytes * 2))
+	{
+	  pstdout_fprintf (state_data->pstate,
+			   stderr,
+			   "invalid hex length for %s\n",
+			   str);
+	  return (-1);
+	}
+
+      if (!isxdigit (from[i]))
+	{
+	  pstdout_fprintf (state_data->pstate,
+			   stderr,
+			   "invalid hex byte argument for %s\n",
+			   str);
+	  return (-1);
+	}
+    }
+
+  return (0);
+}
+
+static int
 parse_uint16 (bmc_device_state_data_t *state_data,
 	      char *from,
 	      uint16_t *to,
 	      char *str)
 {
   char *endptr;
-  int i;
 
   assert (state_data);
   assert (from);
@@ -805,17 +852,8 @@ parse_uint16 (bmc_device_state_data_t *state_data,
     {
       if (!strncmp (from, "0x", 2))
 	{
-	  for (i = 2; from[i] != '\0'; i++)
-	    {
-	      if (!isxdigit (from[i]))
-		{
-		  pstdout_fprintf (state_data->pstate,
-				   stderr,
-				   "invalid hex byte argument for %s\n",
-				   str);
-		  return (-1);
-		}
-	    }
+	  if (parse_check_hex (state_data, from + 2, str, 2) < 0)
+	    return (-1);
 	}
     }
 
@@ -841,7 +879,6 @@ parse_hex_uint16 (bmc_device_state_data_t *state_data,
 		  char *str)
 {
   char *endptr;
-  int i;
 
   assert (state_data);
   assert (from);
@@ -863,17 +900,8 @@ parse_hex_uint16 (bmc_device_state_data_t *state_data,
       return (-1);
     }
   
-  for (i = 0; from[i] != '\0'; i++)
-    {
-      if (!isxdigit (from[i]))
-        {
-          pstdout_fprintf (state_data->pstate,
-                           stderr,
-                           "invalid hex byte argument for %s\n",
-                           str);
-          return (-1);
-        }
-    }
+  if (parse_check_hex (state_data, from, str, 2) < 0)
+    return (-1);
   
   errno = 0;
   (*to) = strtol (from, &endptr, 16);
@@ -883,6 +911,43 @@ parse_hex_uint16 (bmc_device_state_data_t *state_data,
       pstdout_fprintf (state_data->pstate,
 		       stderr,
 		       "invalid hex byte argument for %s\n",
+		       str);
+      return (-1);
+    }
+
+  return (0);
+}
+
+static int
+parse_int16 (bmc_device_state_data_t *state_data,
+	     char *from,
+	     int16_t *to,
+	     char *str)
+{
+  char *endptr;
+
+  assert (state_data);
+  assert (from);
+  assert (to);
+  assert (str);
+
+  if (strlen (from) >= 2)
+    {
+      if (!strncmp (from, "0x", 2))
+	{
+	  if (parse_check_hex (state_data, from + 2, str, 2) < 0)
+	    return (-1);
+	}
+    }
+
+  errno = 0;
+  (*to) = strtol (from, &endptr, 0);
+  if (errno
+      || endptr[0] != '\0')
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "invalid argument for %s\n",
 		       str);
       return (-1);
     }
@@ -1112,10 +1177,8 @@ get_sdr_repository_time (bmc_device_state_data_t *state_data)
 {
   fiid_obj_t obj_cmd_rs = NULL;
   uint64_t val;
-  char timestr[512];
+  char timestr[BMC_DEVICE_TIME_BUFLEN + 1];
   int rv = -1;
-  time_t t;
-  struct tm tm;
 
   assert (state_data);
 
@@ -1146,15 +1209,23 @@ get_sdr_repository_time (bmc_device_state_data_t *state_data)
       goto cleanup;
     }
 
-  /* Posix says individual calls need not clear/set all portions of
-   * 'struct tm', thus passing 'struct tm' between functions could
-   * have issues.  So we need to memset.
-   */
-  memset (&tm, '\0', sizeof(struct tm));
+  memset (timestr, '\0', BMC_DEVICE_TIME_BUFLEN + 1);
 
-  t = val;
-  localtime_r (&t, &tm);
-  strftime (timestr, sizeof (timestr), "%m/%d/%Y - %H:%M:%S", &tm);
+  if (ipmi_timestamp_string ((uint32_t)val,
+			     state_data->prog_data->args->common_args.utc_offset,
+			     get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						  IPMI_TIMESTAMP_FLAG_DEFAULT), 
+			     "%m/%d/%Y - %H:%M:%S",
+			     timestr,
+			     BMC_DEVICE_TIME_BUFLEN) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "ipmi_timestamp_string: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
+			     
   pstdout_printf (state_data->pstate,
                   "SDR Repository Time : %s\n",
                   timestr);
@@ -1240,10 +1311,8 @@ get_sel_time (bmc_device_state_data_t *state_data)
 {
   fiid_obj_t obj_cmd_rs = NULL;
   uint64_t val;
-  char timestr[512];
+  char timestr[BMC_DEVICE_TIME_BUFLEN + 1];
   int rv = -1;
-  time_t t;
-  struct tm tm;
 
   assert (state_data);
 
@@ -1274,15 +1343,23 @@ get_sel_time (bmc_device_state_data_t *state_data)
       goto cleanup;
     }
 
-  /* Posix says individual calls need not clear/set all portions of
-   * 'struct tm', thus passing 'struct tm' between functions could
-   * have issues.  So we need to memset.
-   */
-  memset (&tm, '\0', sizeof(struct tm));
+  memset (timestr, '\0', BMC_DEVICE_TIME_BUFLEN + 1);
 
-  t = val;
-  localtime_r (&t, &tm);
-  strftime (timestr, sizeof (timestr), "%m/%d/%Y - %H:%M:%S", &tm);
+  if (ipmi_timestamp_string ((uint32_t)val,
+			     state_data->prog_data->args->common_args.utc_offset,
+			     get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						  IPMI_TIMESTAMP_FLAG_DEFAULT), 
+			     "%m/%d/%Y - %H:%M:%S",
+			     timestr,
+			     BMC_DEVICE_TIME_BUFLEN) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "ipmi_timestamp_string: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
+
   pstdout_printf (state_data->pstate,
                   "SEL Time : %s\n",
                   timestr);
@@ -1364,13 +1441,111 @@ set_sel_time (bmc_device_state_data_t *state_data)
 }
 
 static int
+get_sel_time_utc_offset (bmc_device_state_data_t *state_data)
+{
+  fiid_obj_t obj_cmd_rs = NULL;
+  int16_t offset;
+  uint64_t val;
+  int rv = -1;
+
+  assert (state_data);
+
+  if (!(obj_cmd_rs = fiid_obj_create (tmpl_cmd_get_sel_time_utc_offset_rs)))
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "fiid_obj_create: %s\n",
+                       strerror (errno));
+      goto cleanup;
+    }
+
+  if (ipmi_cmd_get_sel_time_utc_offset (state_data->ipmi_ctx, obj_cmd_rs) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "ipmi_cmd_get_sel_time_utc_offset: %s\n",
+                       ipmi_ctx_errormsg (state_data->ipmi_ctx));
+      goto cleanup;
+    }
+
+  if (FIID_OBJ_GET (obj_cmd_rs, "offset", &val) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "fiid_obj_get: 'offset': %s\n",
+                       fiid_obj_errormsg (obj_cmd_rs));
+      goto cleanup;
+    }
+  offset = (int16_t)val;
+
+  if (offset == IPMI_SEL_TIME_UTC_OFFSET_UNSPECIFIED)
+    pstdout_printf (state_data->pstate,
+		    "SEL UTC Offset : Unspecified\n",
+		    offset);
+  else
+    pstdout_printf (state_data->pstate,
+		    "SEL UTC Offset : %d minutes\n",
+		    offset);
+  rv = 0;
+ cleanup:
+  fiid_obj_destroy (obj_cmd_rs);
+  return (rv);
+}
+
+static int
+set_sel_time_utc_offset (bmc_device_state_data_t *state_data)
+{
+  struct bmc_device_arguments *args;
+  fiid_obj_t obj_cmd_rs = NULL;
+  int16_t offset;
+  int rv = -1;
+
+  assert (state_data);
+
+  args = state_data->prog_data->args;
+
+  if (!strcasecmp (args->set_sel_time_utc_offset_arg, "none"))
+    offset = IPMI_SEL_TIME_UTC_OFFSET_UNSPECIFIED;
+  else
+    {
+      if (parse_int16 (state_data,
+		       args->set_sel_time_utc_offset_arg,
+		       &offset,
+		       "offset") < 0)
+	goto cleanup;
+    }
+
+  if (!(obj_cmd_rs = fiid_obj_create (tmpl_cmd_set_sel_time_utc_offset_rs)))
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "fiid_obj_create: %s\n",
+                       strerror (errno));
+      goto cleanup;
+    }
+
+  if (ipmi_cmd_set_sel_time_utc_offset (state_data->ipmi_ctx, offset, obj_cmd_rs) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "ipmi_cmd_set_sel_time_utc_offset: %s\n",
+                       ipmi_ctx_errormsg (state_data->ipmi_ctx));
+      goto cleanup;
+    }
+
+  rv = 0;
+ cleanup:
+  fiid_obj_destroy (obj_cmd_rs);
+  return (rv);
+}
+
+static int
 parse_hex_byte (bmc_device_state_data_t *state_data,
                 char *from,
                 uint8_t *to,
                 char *str)
 {
   char *endptr;
-  int i;
 
   assert (state_data);
   assert (from);
@@ -1392,26 +1567,8 @@ parse_hex_byte (bmc_device_state_data_t *state_data,
       return (-1);
     }
   
-  for (i = 0; from[i] != '\0'; i++)
-    {
-      if (i >= 2)
-        {
-          pstdout_fprintf (state_data->pstate,
-                           stderr,
-                           "invalid hex byte argument for %s\n",
-                           str);
-          return (-1);
-        }
-      
-      if (!isxdigit (from[i]))
-        {
-          pstdout_fprintf (state_data->pstate,
-                           stderr,
-                           "invalid hex byte argument for %s\n",
-                           str);
-          return (-1);
-        }
-    }
+  if (parse_check_hex (state_data, from, str, 1) < 0)
+    return (-1);
 
   errno = 0;
   (*to) = strtol (from, &endptr, 16);
@@ -1848,7 +2005,7 @@ get_mca_auxiliary_log_status (bmc_device_state_data_t *state_data)
   fiid_obj_t mca_obj_cmd_rs = NULL;
   uint32_t mca_log_entry_count;
   uint64_t val;
-  char timestr[512];
+  char timestr[BMC_DEVICE_TIME_BUFLEN + 1];
   int rv = -1;
   time_t t;
   struct tm tm;
@@ -1894,6 +2051,8 @@ get_mca_auxiliary_log_status (bmc_device_state_data_t *state_data)
                        fiid_obj_errormsg (obj_cmd_rs));
       goto cleanup;
     }
+
+  memset (timestr, '\0', BMC_DEVICE_TIME_BUFLEN + 1);
 
   /* Posix says individual calls need not clear/set all portions of
    * 'struct tm', thus passing 'struct tm' between functions could
@@ -2531,6 +2690,340 @@ set_operating_system_name (bmc_device_state_data_t *state_data)
 				  state_data->prog_data->args->set_operating_system_name_arg));
 }
 
+static int
+set_present_os_version_number (bmc_device_state_data_t *state_data)
+{
+  assert (state_data);
+
+  return (set_system_info_common (state_data,
+				  ipmi_cmd_set_system_info_parameters_present_os_version_number_first_set,
+				  "ipmi_cmd_set_system_info_parameters_present_os_version_number_first_set",
+				  ipmi_cmd_set_system_info_parameters_present_os_version_number,
+				  "ipmi_cmd_set_system_info_parameters_present_os_version_number",
+				  state_data->prog_data->args->set_present_os_version_number_arg));
+}
+
+static int
+set_bmc_url (bmc_device_state_data_t *state_data)
+{
+  assert (state_data);
+
+  return (set_system_info_common (state_data,
+				  ipmi_cmd_set_system_info_parameters_bmc_url_first_set,
+				  "ipmi_cmd_set_system_info_parameters_bmc_url_first_set",
+				  ipmi_cmd_set_system_info_parameters_bmc_url,
+				  "ipmi_cmd_set_system_info_parameters_bmc_url",
+				  state_data->prog_data->args->set_bmc_url_arg));
+}
+
+static int
+set_base_os_hypervisor_url (bmc_device_state_data_t *state_data)
+{
+  assert (state_data);
+
+  return (set_system_info_common (state_data,
+				  ipmi_cmd_set_system_info_parameters_base_os_hypervisor_url_first_set,
+				  "ipmi_cmd_set_system_info_parameters_base_os_hypervisor_url_first_set",
+				  ipmi_cmd_set_system_info_parameters_base_os_hypervisor_url,
+				  "ipmi_cmd_set_system_info_parameters_base_os_hypervisor_url",
+				  state_data->prog_data->args->set_base_os_hypervisor_url_arg));
+}
+
+
+static int
+read_fru (bmc_device_state_data_t *state_data)
+{
+  uint8_t areabuf[IPMI_FRU_AREA_SIZE_MAX+1];
+  unsigned int area_type = 0;
+  unsigned int area_length = 0;
+  unsigned int flags = 0;
+  int fd = -1;
+  int rv = -1;
+
+  assert (state_data);
+
+  if (!(state_data->fru_ctx = ipmi_fru_ctx_create (state_data->ipmi_ctx)))
+    {
+      pstdout_perror (state_data->pstate, "ipmi_fru_ctx_create()");
+      goto cleanup;
+    }
+  
+  if (state_data->prog_data->args->common_args.debug)
+    flags |= IPMI_FRU_FLAGS_DEBUG_DUMP;
+
+  /* Don't care about checksum checks now */
+  flags |= IPMI_FRU_FLAGS_SKIP_CHECKSUM_CHECKS;
+  flags |= IPMI_FRU_FLAGS_READ_RAW;
+
+  if (ipmi_fru_ctx_set_flags (state_data->fru_ctx, flags) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "ipmi_fru_ctx_set_flags: %s\n",
+		       ipmi_fru_ctx_strerror (ipmi_fru_ctx_errnum (state_data->fru_ctx)));
+      goto cleanup;
+    }
+  
+  if (ipmi_fru_open_device_id (state_data->fru_ctx, state_data->prog_data->args->device_id) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "ipmi_fru_open_device_id: %s\n",
+                       ipmi_fru_ctx_errormsg (state_data->fru_ctx));
+      goto cleanup;
+    }
+
+  memset (areabuf, '\0', IPMI_FRU_AREA_SIZE_MAX + 1);
+  if (ipmi_fru_read_data_area (state_data->fru_ctx,
+			       &area_type,
+			       &area_length,
+			       areabuf,
+			       IPMI_FRU_AREA_SIZE_MAX) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "ipmi_fru_read_data_area: %s\n",
+		       ipmi_fru_ctx_errormsg (state_data->fru_ctx));
+      goto cleanup;
+    }
+
+  if (area_type != IPMI_FRU_AREA_TYPE_RAW_DATA)
+    {
+      pstdout_printf (state_data->pstate,
+                      "FRU Error: Invalid area type returned\n");
+      goto out;
+    }
+
+  if (area_length)
+    {
+      if ((fd = open (state_data->prog_data->args->read_fru_filename, O_CREAT | O_WRONLY, 0600)) < 0)
+	{
+	  pstdout_fprintf (state_data->pstate,
+			   stderr,
+			   "Cannot open '%s': %s\n",
+			   state_data->prog_data->args->read_fru_filename,
+			   strerror (errno));
+	  goto out;
+	}
+
+      if (fd_write_n (fd, areabuf, area_length) < 0)
+	{
+	  pstdout_fprintf (state_data->pstate,
+			   stderr,
+			   "fd_write_n: %s\n",
+			   strerror (errno));
+	  goto out;
+	}
+    }
+  else
+    {
+      pstdout_printf (state_data->pstate,
+                      "FRU Error: FRU area is zero length\n");
+      goto out;
+    }
+
+  
+ /* Close of fru_ctx in run_cmd_args */
+ out:
+  rv = 0;
+ cleanup:
+  ipmi_fru_close_device_id (state_data->fru_ctx);
+  close (fd);
+  return (rv);
+}
+
+static int
+write_fru (bmc_device_state_data_t *state_data)
+{
+  uint8_t areabuf[IPMI_FRU_AREA_SIZE_MAX+1];
+  fiid_obj_t fru_get_inventory_rs = NULL;
+  fiid_obj_t obj_cmd_rs = NULL;
+  struct stat sbuf;
+  unsigned int area_size;
+  unsigned int area_offset = 0;
+  unsigned int blocksize = 16;
+  ssize_t len;
+  int fd = -1;
+  int rv = -1;
+  int loop_errors = 0;
+  int loop_errors_max = 5;	/* arbitrarily selected */
+  unsigned int percent = 0;
+  uint64_t val;
+
+  assert (state_data);
+
+  if (stat (state_data->prog_data->args->write_fru_filename, &sbuf) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "Cannot stat '%s': %s\n",
+		       state_data->prog_data->args->write_fru_filename,
+		       strerror (errno));
+      goto cleanup;
+    }
+
+  if (!sbuf.st_size)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "FRU file '%s' is empty\n",
+		       state_data->prog_data->args->write_fru_filename);
+      goto cleanup;
+    }
+
+  if (!(fru_get_inventory_rs = fiid_obj_create (tmpl_cmd_get_fru_inventory_area_info_rs)))
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "fiid_obj_create: %s\n",
+                       strerror (errno));
+      goto cleanup;
+    }
+
+  if (ipmi_cmd_get_fru_inventory_area_info (state_data->ipmi_ctx,
+					    state_data->prog_data->args->device_id,
+					    fru_get_inventory_rs) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "ipmi_cmd_get_fru_inventory_area_info: %s\n",
+                       ipmi_ctx_errormsg (state_data->ipmi_ctx));
+      goto cleanup;
+    }
+
+  if (FIID_OBJ_GET (fru_get_inventory_rs,
+		    "fru_inventory_area_size",
+		    &val) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "fiid_obj_get: 'fru_inventory_area_size': %s\n",
+                       fiid_obj_errormsg (fru_get_inventory_rs));
+      goto cleanup;
+    }
+  area_size = val;
+
+  if (area_size != sbuf.st_size)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "FRU file '%s':  size (%u) does not match area size (%u)\n",
+		       sbuf.st_size,
+		       area_size);
+      goto cleanup;
+    }
+
+  memset (areabuf, '\0', IPMI_FRU_AREA_SIZE_MAX + 1);
+  if ((fd = open (state_data->prog_data->args->write_fru_filename, O_RDONLY)) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "Cannot open '%s': %s\n",
+		       state_data->prog_data->args->write_fru_filename,
+		       strerror (errno));
+      goto cleanup;
+    }
+  
+  if ((len = fd_read_n (fd, areabuf, area_size)) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "fd_read_n: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
+
+  if (!(obj_cmd_rs = fiid_obj_create (tmpl_cmd_write_fru_data_rs)))
+    {
+      pstdout_fprintf (state_data->pstate,
+                       stderr,
+                       "fiid_obj_create: %s\n",
+                       strerror (errno));
+      goto cleanup;
+    }
+
+  if (state_data->prog_data->args->verbose)
+    fprintf (stderr, "%u%%\r", percent);
+
+  while (area_offset < area_size)
+    {
+      unsigned int count_written;
+
+      if ((area_size - area_offset) < blocksize)
+	blocksize = area_size - area_offset;
+
+      if (ipmi_cmd_write_fru_data (state_data->ipmi_ctx,
+                                   state_data->prog_data->args->device_id,
+                                   area_offset,
+                                   areabuf + area_offset,
+                                   blocksize,
+                                   obj_cmd_rs) < 0)
+	{
+	  if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE)
+	    {
+	      /* Assume blocksize is too large */
+	      if (ipmi_check_completion_code (obj_cmd_rs, IPMI_COMP_CODE_CANNOT_RETURN_REQUESTED_NUMBER_OF_BYTES) == 1)
+		{
+		  if (!(blocksize <= 8))
+		    blocksize /= 2;
+		  else
+		    goto error_out;
+		}
+	      
+	      if (ipmi_check_completion_code (obj_cmd_rs, IPMI_COMP_CODE_WRITE_FRU_DATA_FRU_DEVICE_BUSY) == 1)
+		{
+		  loop_errors++;
+
+		  if (loop_errors > loop_errors_max)
+		    goto error_out;
+		}
+
+	      continue;
+	    }
+
+	error_out:
+	  pstdout_fprintf (state_data->pstate,
+			   stderr,
+			   "ipmi_cmd_write_fru_data: %s\n",
+			   ipmi_ctx_errormsg (state_data->ipmi_ctx));
+	  goto cleanup;
+	}
+
+      if (FIID_OBJ_GET (obj_cmd_rs,
+			"count_written",
+			&val) < 0)
+	{
+	  pstdout_fprintf (state_data->pstate,
+			   stderr,
+			   "fiid_obj_get: 'count_written': %s\n",
+			   fiid_obj_errormsg (fru_get_inventory_rs));
+	  goto cleanup;
+	}
+      count_written = val;
+
+      area_offset += count_written;
+
+      if (state_data->prog_data->args->verbose)
+	{
+	  unsigned int newpercent = (unsigned int)(((double)area_offset/area_size) * 100);
+	  if (newpercent > percent)
+	    {
+	      percent = newpercent;
+	      fprintf (stderr, "%u%%\r", percent);
+	    }
+	}
+    }
+
+  if (state_data->prog_data->args->verbose)
+    fprintf (stderr, "100%%\r\n");
+
+  rv = 0;
+ cleanup:
+  fiid_obj_destroy (fru_get_inventory_rs);
+  fiid_obj_destroy (obj_cmd_rs);
+  close (fd);
+  return (rv);
+}
 
 static int
 run_cmd_args (bmc_device_state_data_t *state_data)
@@ -2580,6 +3073,12 @@ run_cmd_args (bmc_device_state_data_t *state_data)
   if (args->set_sel_time)
     return (set_sel_time (state_data));
 
+  if (args->get_sel_time_utc_offset)
+    return (get_sel_time_utc_offset (state_data));
+
+  if (args->set_sel_time_utc_offset)
+    return (set_sel_time_utc_offset (state_data));
+
   if (args->platform_event)
     return (platform_event (state_data));
 
@@ -2613,6 +3112,21 @@ run_cmd_args (bmc_device_state_data_t *state_data)
   if (args->set_operating_system_name)
     return (set_operating_system_name (state_data));
 
+  if (args->set_present_os_version_number)
+    return (set_present_os_version_number (state_data));
+
+  if (args->set_bmc_url)
+    return (set_bmc_url (state_data));
+
+  if (args->set_base_os_hypervisor_url)
+    return (set_base_os_hypervisor_url (state_data));
+
+  if (args->read_fru)
+    return (read_fru (state_data));
+  
+  if (args->write_fru)
+    return (write_fru (state_data));
+
   rv = 0;
   return (rv);
 }
@@ -2639,7 +3153,7 @@ _bmc_device (pstdout_state_t pstate,
 	return (EXIT_FAILURE);
       return (EXIT_SUCCESS);
     }
-  
+
   memset (&state_data, '\0', sizeof (bmc_device_state_data_t));
   state_data.prog_data = prog_data;
   state_data.pstate = pstate;
@@ -2663,6 +3177,7 @@ _bmc_device (pstdout_state_t pstate,
   exit_code = EXIT_SUCCESS;
  cleanup:
   ipmi_sdr_ctx_destroy (state_data.sdr_ctx);
+  ipmi_fru_ctx_destroy (state_data.fru_ctx);
   ipmi_ctx_close (state_data.ipmi_ctx);
   ipmi_ctx_destroy (state_data.ipmi_ctx);
   return (exit_code);
@@ -2689,6 +3204,21 @@ main (int argc, char **argv)
 
   if (!hosts_count)
     return (EXIT_SUCCESS);
+
+  /* Handle special case exceptions */
+  if (prog_data.args->read_fru && hosts_count > 1)
+    {
+      fprintf (stderr,
+	       "Cannot execute --read-fru on multiple hosts\n");
+      return (EXIT_FAILURE);
+    }
+
+  if (prog_data.args->write_fru && hosts_count > 1 && prog_data.args->verbose > 0)
+    {
+      fprintf (stderr,
+	       "Cannot execute --write-fru w/ verbosity on multiple hosts, setting verbosity to 0\n");
+      prog_data.args->verbose = 0;
+    }
 
   /* We don't want caching info to output when are doing ranged output */
   if (hosts_count > 1)

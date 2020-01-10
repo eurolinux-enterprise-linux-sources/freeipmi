@@ -8,7 +8,7 @@ bmc-device \- perform advanced BMC commands
 .B bmc-device 
 supports a variety of IPMI commands to perform advanced BMC functions.
 This tool is primarily used for development debugging, BMC error
-recory, retrieving detailed technical information, and other advanced
+recovery, retrieving detailed technical information, and other advanced
 purposes.  Most IPMI users will not need to use this tool.  Some of
 the
 .B bmc-device
@@ -98,6 +98,14 @@ Set SEL time.  Input format = "MM/DD/YYYY - HH:MM:SS".  Note that
 hours are input in 24 hour form.  Alternatively, the local
 system time can be specified with "now".
 .TP
+\fB\-\-get\-sel\-time\-utc\-offset\fR
+Get SEL time UTC offset.
+.TP
+\fB\-\-set\-sel\-time\-utc\-offset\fR=\fIMINUTES\fR
+Set SEL time UTC offset.  Input is in minutes difference from UTC
+time, ranging from -1440 to 1440 minutes.  A special case value of
+"none" can be specified so no UTC offset is specified. 
+.TP
 \fB\-\-platform\-event\fR=\fI"[generator_id] <event_message_format_version> <sensor_type> <sensor_number> <event_type> <event_direction> <event_data1> <event_data2> <event_data3>"\fR
 Instruct the BMC to process the specified event data.  Typically, this
 data will be logged to the System Event Log (SEL), but depending on
@@ -153,11 +161,35 @@ Set Primary Operating System Name.
 \fB\-\-set\-operating\-system\-name\fR=\fISTRING\fR
 Set Operating System Name.
 .TP
+\fB\-\-set\-present\-os\-version\-number\fR=\fISTRING\fR
+Set Present OS Version Number.
+.TP
+\fB\-\-set\-bmc\-url\fR=\fISTRING\fR
+Set BMC URL.
+.TP
+\fB\-\-set\-base\-os\-hypervisor\-url\fR=\fISTRING\fR
+Set Base OS/Hypervisor URL.
+.TP
+\fB\-\-read\-fru\fR=\fIFILENAME\fR
+Read the contents of a FRU device ID and store it in the specified
+file.  Requires setting of a device ID via \fI\-\-device\-id\.
+.TP
+\fB\-\-write\-fru\fR=\fIFILENAME\fR
+Write the contents of the specified file into a FRU device id.
+Requires setting of a device ID via \fI\-\-device\-id\.  If
+\fI\-\-verbose\fR is specified, progress percent will also be output.
+.TP
+\fB\-\-device\-id\fR=\fIIDNUM\fR
+Specify a specific FRU device ID.  For use with \fI\-\-read\-fru\fR
+and \fI\-\-write\-fru\fR.
+.TP
 \fB\-\-verbose\fR
 Increase verbosity in output.
 #include <@top_srcdir@/man/manpage-common-sdr-cache-options-heading.man>
 #include <@top_srcdir@/man/manpage-common-sdr-cache-options.man>
 #include <@top_srcdir@/man/manpage-common-sdr-cache-file-directory.man>
+#include <@top_srcdir@/man/manpage-common-time-options-heading.man>
+#include <@top_srcdir@/man/manpage-common-time-options.man>
 #include <@top_srcdir@/man/manpage-common-hostranged-options-header.man>
 #include <@top_srcdir@/man/manpage-common-hostranged-buffer.man>
 #include <@top_srcdir@/man/manpage-common-hostranged-consolidate.man>
@@ -199,7 +231,7 @@ Perform a cold reset across a cluster using IPMI over LAN.
 #include <@top_srcdir@/man/manpage-common-known-issues.man>
 #include <@top_srcdir@/man/manpage-common-reporting-bugs.man>
 .SH "COPYRIGHT"
-Copyright \(co 2008-2012 FreeIPMI Core Team.  
+Copyright \(co 2008-2015 FreeIPMI Core Team.  
 #include <@top_srcdir@/man/manpage-common-gpl-program-text.man>
 .SH "SEE ALSO"
 freeipmi.conf(5), freeipmi(7)

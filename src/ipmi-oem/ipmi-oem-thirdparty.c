@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 FreeIPMI Core Team
+ * Copyright (C) 2008-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,11 +84,12 @@ ipmi_oem_thirdparty_get_system_info_block_pstring (ipmi_oem_state_data_t *state_
                                            IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
                                            obj_cmd_rs) < 0)
     {
-      if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	  && ((ipmi_check_completion_code (obj_cmd_rs,
-					   IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)))
+      if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	   && ipmi_check_completion_code (obj_cmd_rs,
+					  IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+	  || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	      && ipmi_check_completion_code (obj_cmd_rs,
+					     IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	{
 	  pstdout_fprintf (state_data->pstate,
 			   stderr,
@@ -1204,7 +1205,7 @@ ipmi_oem_thirdparty_get_account_status (ipmi_oem_state_data_t *state_data)
                                   get_user_name_obj_cmd_rs) < 0)
         {
           /* Username is not set yet */
-          if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+          if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
               && (ipmi_check_completion_code (get_user_name_obj_cmd_rs,
                                               IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
             continue;
@@ -1381,7 +1382,7 @@ ipmi_oem_thirdparty_get_dns_config_v1 (ipmi_oem_state_data_t *state_data)
   
   pstdout_printf (state_data->pstate,
 		  "DNS Register BMC     : %s\n",
-		  (dnsdomainnamedhcpenable) ? "Enabled" : "Disabled");
+		  (dnsregisterbmc) ? "Enabled" : "Disabled");
   
   pstdout_printf (state_data->pstate,
                   "DNS BMC Host Name    : %s\n",

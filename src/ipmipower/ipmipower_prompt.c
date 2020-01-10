@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmipower_prompt.c,v 1.121 2010-08-06 18:38:37 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2003-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -394,7 +394,7 @@ _cmd_workaround_flags (char **argv)
     }
   else
     ipmipower_cbuf_printf (ttyout,
-                           "workaround_flags must be specified: %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                           "workaround_flags must be specified: %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
 			   IPMI_PARSE_WORKAROUND_FLAGS_NONE_STR,
                            IPMI_PARSE_WORKAROUND_FLAGS_OUTOFBAND_AUTHENTICATION_CAPABILITIES_STR,
 			   IPMI_PARSE_WORKAROUND_FLAGS_OUTOFBAND_NO_CHECKSUM_CHECK_STR,
@@ -407,7 +407,8 @@ _cmd_workaround_flags (char **argv)
                            IPMI_PARSE_WORKAROUND_FLAGS_OUTOFBAND_2_0_SUPERMICRO_2_0_SESSION_STR,
                            IPMI_PARSE_WORKAROUND_FLAGS_OUTOFBAND_2_0_SUN_2_0_SESSION_STR,
                            IPMI_PARSE_WORKAROUND_FLAGS_OUTOFBAND_2_0_OPEN_SESSION_PRIVILEGE_STR,
-                           IPMI_PARSE_WORKAROUND_FLAGS_OUTOFBAND_2_0_NON_EMPTY_INTEGRITY_CHECK_VALUE_STR);
+                           IPMI_PARSE_WORKAROUND_FLAGS_OUTOFBAND_2_0_NON_EMPTY_INTEGRITY_CHECK_VALUE_STR,
+			   IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_IPMIPING_STR);
 }
 
 static void
@@ -1003,6 +1004,11 @@ _cmd_config (void)
                        IPMI_PARSE_WORKAROUND_FLAGS_OUTOFBAND_2_0_NO_CHECKSUM_CHECK_STR,
                        &is_first);
 #endif
+  _workarounds_strcat (strbuf,
+                       cmd_args.common_args.workaround_flags_outofband_2_0,
+                       IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_IPMIPING,
+                       IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_IPMIPING_STR,
+                       &is_first);
 
   ipmipower_cbuf_printf (ttyout,
                          "WorkaroundFlags:              %s\n",

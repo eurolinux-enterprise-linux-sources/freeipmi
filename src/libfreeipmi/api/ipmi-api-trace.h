@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -104,6 +104,12 @@
   do {                                                                      \
     api_set_api_errnum_by_sunbmc_errnum ((__ctx), (__errnum));              \
     TRACE_MSG_OUT (ipmi_sunbmc_ctx_strerror ((__errnum)), (__errnum));      \
+  } while (0)
+
+#define API_INTELDCMI_ERRNUM_TO_API_ERRNUM(__ctx, __errnum)                 \
+  do {                                                                      \
+    api_set_api_errnum_by_inteldcmi_errnum ((__ctx), (__errnum));           \
+    TRACE_MSG_OUT (ipmi_inteldcmi_ctx_strerror ((__errnum)), (__errnum));   \
   } while (0)
 
 #define API_LOCATE_ERRNUM_TO_API_ERRNUM(__ctx, __errnum)                    \

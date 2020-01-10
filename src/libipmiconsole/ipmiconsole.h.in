@@ -192,6 +192,20 @@ extern "C" {
  * it removes some validation of packet integrity.  However, it is
  * unlikely to be an issue in most situations.
  *
+ * SERIAL_ALERTS_DEFERRED
+ *
+ * This workaround option will set serial alerts to be deferred
+ * instead of have them be failures.  This works around motherboards
+ * that perform IPMI over serial along with IPMI serial over LAN.
+ *
+ * INCREMENT_SOL_PACKET_SEQUENCE
+ *
+ * This workaround option will increment the SOL payload packet
+ * sequence number under dire circumstances.  Normally SOL should
+ * never do this, however some motherboards have shown to get "stuck"
+ * due to an internal bug on the motherboard.  This workaround can
+ * help in getting the BMC un-stuck.
+ *
  * IGNORE_SOL_PAYLOAD_SIZE
  *
  * This workaround flag will not check for valid SOL payload sizes and
@@ -210,6 +224,12 @@ extern "C" {
  * of SOL during the protocol setup.  It works around remote systems
  * that do not properly support this command.
  *
+ * SKIP_CHANNEL_PAYLOAD_SUPPORT
+ *
+ * This workaround flag will skip the portion of the protocol that
+ * checks if SOL is supported on the current channel.  It works around
+ * remote systems that do not properly support this command.
+ *
  * DEFAULT
  *
  * Informs library to use default, may it be the standard default or
@@ -225,9 +245,12 @@ extern "C" {
 #define IPMICONSOLE_WORKAROUND_OPEN_SESSION_PRIVILEGE          0x00000010
 #define IPMICONSOLE_WORKAROUND_NON_EMPTY_INTEGRITY_CHECK_VALUE 0x00000020
 #define IPMICONSOLE_WORKAROUND_NO_CHECKSUM_CHECK               0x00000040
+#define IPMICONSOLE_WORKAROUND_SERIAL_ALERTS_DEFERRED          0x00000080
+#define IPMICONSOLE_WORKAROUND_INCREMENT_SOL_PACKET_SEQUENCE   0x00000100
 #define IPMICONSOLE_WORKAROUND_IGNORE_SOL_PAYLOAD_SIZE         0x01000000
 #define IPMICONSOLE_WORKAROUND_IGNORE_SOL_PORT                 0x02000000
 #define IPMICONSOLE_WORKAROUND_SKIP_SOL_ACTIVATION_STATUS      0x04000000
+#define IPMICONSOLE_WORKAROUND_SKIP_CHANNEL_PAYLOAD_SUPPORT    0x08000000
 #define IPMICONSOLE_WORKAROUND_DEFAULT                         0xFFFFFFFF
 
 /*
@@ -239,13 +262,13 @@ extern "C" {
  * CLOSE_FD
  *
  * By default, the ipmiconsole engine will not close the file
- * descriptor (returned by ipmiconsole_ctx_fd()) when an error occurs
- * within the ipmiconsole engine (such as a session timeout).  A user
- * will subsequently see an EOF on a read() or an EPIPE on a write()
- * to know an error occurred.
+ * descriptor (returned by ipmiconsole_ctx_fd()) within the
+ * ipmiconsole engine (such as a session timeout).  On errors (such as
+ * session timeout), a user will subsequently see an EOF on a read()
+ * or an EPIPE on a write() to know an error occurred.
  *
- * This flag will inform the engine to close the file descriptor on
- * error.  This will change the behavior of how the user should
+ * This flag will inform the engine to close the file descriptor for
+ * the user.  This will change the behavior of how the user should
  * program with the file descriptor.  For example, calls to read() and
  * write() would likely return with EBADF errors instead of EOF or
  * EPIPE errors respectively.  Calls to select() may return with EBADF
@@ -759,7 +782,8 @@ int ipmiconsole_engine_submit_block (ipmiconsole_ctx_t c);
  * ipmiconsole_engine_teardown
  *
  * Teardown the ipmiconsole engine.  This function will destroy
- * all threads and contexts managed by the engine.
+ * all threads managed by the engine.  Users are still required to
+ * destroy remaining contexts with ipmiconsole_ctx_destroy().
  *
  * Parameters:
  *
@@ -899,6 +923,12 @@ ipmiconsole_ctx_status_t ipmiconsole_ctx_status (ipmiconsole_ctx_t c);
  * typically see this affect via an EOF on a read() or an EPIPE on a
  * write().  For alternate file descriptor behavior, see ENGINE flags
  * above.
+ *
+ * If the user successfully retrieves the file descriptor via this
+ * function, the user is required to close the file descriptor.  The
+ * ipmiconsole engine will not do so, with the exception of when the
+ * IPMICONSOLE_ENGINE_CLOSE_FD flag is set.  If the user does not
+ * close the file descriptor, a file descriptor leak may occur.
  */
 int ipmiconsole_ctx_fd (ipmiconsole_ctx_t c);
 
@@ -915,8 +945,11 @@ int ipmiconsole_ctx_generate_break (ipmiconsole_ctx_t c);
 /*
  * ipmiconsole_ctx_destroy
  *
- * Destroy a context.  Will close file descriptor retrieved from
- * ipmiconsole_ctx_fd().
+ * Destroy a context.  May not destroy/release the context resources
+ * immediately if the session is still being cleaned up.  Will instead
+ * be moved to garbage collection.  Will not close file descriptor if
+ * it was retrieved from ipmiconsole_ctx_fd().  User is required to
+ * close it.
  */
 void ipmiconsole_ctx_destroy (ipmiconsole_ctx_t c);
 

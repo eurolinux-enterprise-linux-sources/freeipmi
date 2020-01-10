@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ daemonize_common (const char *pidfile)
       (void) unlink (pidfile);
 
       if (!(pf = fopen (pidfile, "w")))
-	err_exit ("fopen: %s", strerror (errno));
+        err_exit ("Cannot open pidfile '%s': %s", pidfile, strerror (errno));
 
       /* write the 2nd child PID to the pidfile */
       fprintf (pf, "%u\n", pid);

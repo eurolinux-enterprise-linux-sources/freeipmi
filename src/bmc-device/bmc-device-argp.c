@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 FreeIPMI Core Team
+ * Copyright (C) 2008-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,12 @@
 #if STDC_HEADERS
 #include <string.h>
 #endif /* STDC_HEADERS */
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif /* HAVE_UNISTD */
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif /* HAVE_FCNTL_H */
 #if HAVE_ARGP_H
 #include <argp.h>
 #else /* !HAVE_ARGP_H */
@@ -41,7 +47,7 @@
 
 const char *argp_program_version =
   "bmc-device - " PACKAGE_VERSION "\n"
-  "Copyright (C) 2008-2012 FreeIPMI Core Team\n"
+  "Copyright (C) 2008-2015 FreeIPMI Core Team\n"
   "This program is free software; you may redistribute it under the terms of\n"
   "the GNU General Public License.  This program has absolutely no warranty.";
 
@@ -65,6 +71,7 @@ static struct argp_option cmdline_options[] =
     ARGP_COMMON_OPTIONS_WORKAROUND_FLAGS,
     ARGP_COMMON_SDR_CACHE_OPTIONS,
     ARGP_COMMON_SDR_CACHE_OPTIONS_FILE_DIRECTORY,
+    ARGP_COMMON_TIME_OPTIONS,
     ARGP_COMMON_HOSTRANGED_OPTIONS,
     ARGP_COMMON_OPTIONS_DEBUG,
     { "cold-reset", COLD_RESET_KEY, NULL, 0,
@@ -95,6 +102,10 @@ static struct argp_option cmdline_options[] =
       "Get SEL time.", 52},
     { "set-sel-time", SET_SEL_TIME_KEY,  "TIME", 0,
       "Set SEL time.  Input format = \"MM/DD/YYYY - HH:MM:SS\" or \"now\".", 53},
+    { "get-sel-time-utc-offset", GET_SEL_TIME_UTC_OFFSET_KEY,  0, 0,
+      "Get SEL time UTC offset.", 53},
+    { "set-sel-time-utc-offset", SET_SEL_TIME_UTC_OFFSET_KEY,  "OFFSET", 0,
+      "Set SEL time UTC offset.  Offset in minutes or \"none\".", 54},
     { "platform-event", PLATFORM_EVENT_KEY, "[generator_id] <event_message_format_version> <sensor_type> <sensor_number> <event_type> <event_direction> <event_data1> <event_data2> <event_data3>", 0,
       "Instruct the BMC to process the specified event data.", 54},
     { "set-sensor-reading-and-event-status", SET_SENSOR_READING_AND_EVENT_STATUS_KEY, "<sensor_number> <sensor_reading> <sensor_reading_operation> <assertion_bitmask> <assertion_bitmask_operation> <deassertion_bitmask> <deassertion_bitmask_operation> <event_data1> <event_data2> <event_data3> <event_data_operation>", 0,
@@ -117,8 +128,20 @@ static struct argp_option cmdline_options[] =
       "Set Primary Operating System Name.", 63},
     { "set-operating-system-name", SET_OPERATING_SYSTEM_NAME_KEY, "STRING", 0,
       "Set Operating System Name.", 64},
+    { "set-present-os-version-number", SET_PRESENT_OS_VERSION_NUMBER_KEY, "STRING", 0,
+      "Set Present Operating System Version Number.", 65},
+    { "set-bmc-url", SET_BMC_URL_KEY, "STRING", 0,
+      "Set BMC URL.", 66},
+    { "set-base-os-hypervisor-url", SET_BASE_OS_HYPERVISOR_URL_KEY, "STRING", 0,
+      "Set Base OS/Hypervisor URL.", 67},
+    { "read-fru", READ_FRU_KEY, "FILENAME", 0,
+      "Read FRU device ID into specified filename.", 68},
+    { "write-fru", WRITE_FRU_KEY, "FILENAME", 0,
+      "Write specified filename into FRU device ID", 69},
+    { "device-id", DEVICE_ID_KEY, "IDNUM", 0,
+      "Specify device-id for --read-fru or --write-fru.", 70},
     { "verbose", VERBOSE_KEY, 0, 0,
-      "Increase verbosity in output.", 65},
+      "Increase verbosity in output.", 71},
     { NULL, 0, NULL, 0, NULL, 0}
   };
 
@@ -138,6 +161,8 @@ static error_t
 cmdline_parse (int key, char *arg, struct argp_state *state)
 {
   struct bmc_device_arguments *cmd_args;
+  char *endptr;
+  int tmp;
 
   assert (state);
   
@@ -242,6 +267,13 @@ cmdline_parse (int key, char *arg, struct argp_state *state)
       cmd_args->set_sel_time = 1;
       cmd_args->set_sel_time_arg = arg;
       break;
+    case GET_SEL_TIME_UTC_OFFSET_KEY:
+      cmd_args->get_sel_time_utc_offset = 1;
+      break;
+    case SET_SEL_TIME_UTC_OFFSET_KEY:
+      cmd_args->set_sel_time_utc_offset = 1;
+      cmd_args->set_sel_time_utc_offset_arg = arg;
+      break;
     case PLATFORM_EVENT_KEY:
       cmd_args->platform_event = 1;
       cmd_args->platform_event_arg = arg;
@@ -281,6 +313,46 @@ cmdline_parse (int key, char *arg, struct argp_state *state)
       cmd_args->set_operating_system_name = 1;
       cmd_args->set_operating_system_name_arg = arg;
       break;
+    case SET_PRESENT_OS_VERSION_NUMBER_KEY:
+      cmd_args->set_present_os_version_number = 1;
+      cmd_args->set_present_os_version_number_arg = arg;
+      break;
+    case SET_BMC_URL_KEY:
+      cmd_args->set_bmc_url = 1;
+      cmd_args->set_bmc_url_arg = arg;
+      break;
+    case SET_BASE_OS_HYPERVISOR_URL_KEY:
+      cmd_args->set_base_os_hypervisor_url = 1;
+      cmd_args->set_base_os_hypervisor_url_arg = arg;
+      break;
+    case READ_FRU_KEY:
+      cmd_args->read_fru = 1;
+      cmd_args->read_fru_filename = arg;
+      break;
+    case WRITE_FRU_KEY:
+      cmd_args->write_fru = 1;
+      cmd_args->write_fru_filename = arg;
+      break;
+    case DEVICE_ID_KEY:
+      errno = 0;
+      tmp = strtol (arg, &endptr, 0);
+      if (errno
+          || endptr[0] != '\0')
+        {
+          fprintf (stderr, "invalid device id\n");
+          exit (EXIT_FAILURE);
+        }
+      
+      if (tmp == IPMI_FRU_DEVICE_ID_RESERVED
+          || tmp < IPMI_FRU_DEVICE_ID_MIN
+          || tmp > IPMI_FRU_DEVICE_ID_MAX)
+        {
+          fprintf (stderr, "invalid device id\n");
+          exit (EXIT_FAILURE);
+        }
+      cmd_args->device_id = tmp;
+      cmd_args->device_id_set = 1;
+      break;
     case VERBOSE_KEY:
       cmd_args->verbose++;
       break;
@@ -305,7 +377,7 @@ _bmc_device_config_file_parse (struct bmc_device_arguments *cmd_args)
   if (config_file_parse (cmd_args->common_args.config_file,
                          0,
                          &(cmd_args->common_args),
-                         CONFIG_FILE_INBAND | CONFIG_FILE_OUTOFBAND | CONFIG_FILE_SDR | CONFIG_FILE_HOSTRANGE,
+                         CONFIG_FILE_INBAND | CONFIG_FILE_OUTOFBAND | CONFIG_FILE_SDR | CONFIG_FILE_TIME | CONFIG_FILE_HOSTRANGE,
                          CONFIG_FILE_TOOL_BMC_DEVICE,
                          NULL) < 0)
     {
@@ -332,6 +404,8 @@ _bmc_device_args_validate (struct bmc_device_arguments *cmd_args)
       && !cmd_args->set_sdr_repository_time
       && !cmd_args->get_sel_time
       && !cmd_args->set_sel_time
+      && !cmd_args->get_sel_time_utc_offset
+      && !cmd_args->set_sel_time_utc_offset
       && !cmd_args->platform_event
       && !cmd_args->set_sensor_reading_and_event_status
       && !cmd_args->get_mca_auxiliary_log_status
@@ -342,7 +416,12 @@ _bmc_device_args_validate (struct bmc_device_arguments *cmd_args)
       && !cmd_args->set_system_firmware_version
       && !cmd_args->set_system_name
       && !cmd_args->set_primary_operating_system_name
-      && !cmd_args->set_operating_system_name)
+      && !cmd_args->set_operating_system_name
+      && !cmd_args->set_present_os_version_number
+      && !cmd_args->set_bmc_url
+      && !cmd_args->set_base_os_hypervisor_url
+      && !cmd_args->read_fru
+      && !cmd_args->write_fru)
     {
       fprintf (stderr,
                "No command specified.\n");
@@ -362,6 +441,8 @@ _bmc_device_args_validate (struct bmc_device_arguments *cmd_args)
        + cmd_args->set_sdr_repository_time
        + cmd_args->get_sel_time
        + cmd_args->set_sel_time
+       + cmd_args->get_sel_time_utc_offset
+       + cmd_args->set_sel_time_utc_offset
        + cmd_args->platform_event
        + cmd_args->set_sensor_reading_and_event_status
        + cmd_args->get_mca_auxiliary_log_status
@@ -372,8 +453,12 @@ _bmc_device_args_validate (struct bmc_device_arguments *cmd_args)
        + cmd_args->set_system_firmware_version
        + cmd_args->set_system_name
        + cmd_args->set_primary_operating_system_name
-       + cmd_args->set_operating_system_name) > 1)
-    
+       + cmd_args->set_operating_system_name
+       + cmd_args->set_present_os_version_number
+       + cmd_args->set_bmc_url
+       + cmd_args->set_base_os_hypervisor_url
+       + cmd_args->read_fru
+       + cmd_args->write_fru) > 1)
     {
       fprintf (stderr,
                "Multiple commands specified.\n");
@@ -420,6 +505,96 @@ _bmc_device_args_validate (struct bmc_device_arguments *cmd_args)
 	       "operating system name string too long\n");
       exit (EXIT_FAILURE);
     }
+
+  if (cmd_args->set_present_os_version_number
+      && strlen (cmd_args->set_present_os_version_number_arg) > IPMI_SYSTEM_INFO_STRING_LEN_MAX)
+    {
+      fprintf (stderr,
+	       "present OS version number string too long\n");
+      exit (EXIT_FAILURE);
+    }
+
+  if (cmd_args->set_bmc_url
+      && strlen (cmd_args->set_bmc_url_arg) > IPMI_SYSTEM_INFO_STRING_LEN_MAX)
+    {
+      fprintf (stderr,
+	       "BMC URL string too long\n");
+      exit (EXIT_FAILURE);
+    }
+
+  if (cmd_args->set_base_os_hypervisor_url
+      && strlen (cmd_args->set_base_os_hypervisor_url_arg) > IPMI_SYSTEM_INFO_STRING_LEN_MAX)
+    {
+      fprintf (stderr,
+	       "Base OS/Hypervisor URL string too long\n");
+      exit (EXIT_FAILURE);
+    }
+
+  if (cmd_args->read_fru)
+    {
+      if (!cmd_args->device_id_set)
+	{
+	  fprintf (stderr, "Device ID not set\n");
+	  exit (EXIT_FAILURE);
+	}
+
+      if (access (cmd_args->read_fru_filename, F_OK) == 0)
+	{
+	  if (access (cmd_args->read_fru_filename, W_OK) < 0)
+	    {
+	      fprintf (stderr,
+		       "Cannot write to '%s': %s\n",
+		       cmd_args->read_fru_filename,
+		       strerror (errno));
+	      exit (EXIT_FAILURE);
+	    }
+	}
+      else
+	{
+	  int fd;
+
+	  if ((fd = open (cmd_args->read_fru_filename, O_CREAT, 0644)) < 0)
+	    {
+	      fprintf (stderr,
+		       "Cannot open '%s': %s\n",
+		       cmd_args->read_fru_filename,
+		       strerror (errno));
+	      exit (EXIT_FAILURE);
+	    }
+	  else
+	    {
+	      /* ignore close error, don't care right now */
+	      close (fd);
+
+	      if (unlink (cmd_args->read_fru_filename) < 0)
+		{
+		  fprintf (stderr,
+			   "Cannot remove '%s': %s\n",
+			   cmd_args->read_fru_filename,
+			   strerror (errno));
+		  exit (EXIT_FAILURE);
+		}
+	    }
+	}
+    }
+
+  if (cmd_args->write_fru)
+    {
+      if (!cmd_args->device_id_set)
+	{
+	  fprintf (stderr, "Device ID not set\n");
+	  exit (EXIT_FAILURE);
+	}
+
+      if (access (cmd_args->write_fru_filename, R_OK) < 0)
+	{
+	  fprintf (stderr,
+		   "Cannot read '%s': %s\n",
+		   cmd_args->write_fru_filename,
+		   strerror (errno));
+	  exit (EXIT_FAILURE);
+	}
+    }
 }
 
 void
@@ -448,6 +623,9 @@ bmc_device_argp_parse (int argc, char **argv, struct bmc_device_arguments *cmd_a
   cmd_args->get_sel_time = 0;
   cmd_args->set_sel_time = 0;
   cmd_args->set_sel_time_arg = NULL;
+  cmd_args->get_sel_time_utc_offset = 0;
+  cmd_args->set_sel_time_utc_offset = 0;
+  cmd_args->set_sel_time_utc_offset_arg = NULL;
   cmd_args->platform_event = 0;
   cmd_args->platform_event_arg = NULL;
   cmd_args->set_sensor_reading_and_event_status = 0;
@@ -465,6 +643,18 @@ bmc_device_argp_parse (int argc, char **argv, struct bmc_device_arguments *cmd_a
   cmd_args->set_primary_operating_system_name_arg = NULL;
   cmd_args->set_operating_system_name = 0;
   cmd_args->set_operating_system_name_arg = NULL;
+  cmd_args->set_present_os_version_number = 0;
+  cmd_args->set_present_os_version_number_arg = NULL;
+  cmd_args->set_bmc_url = 0;
+  cmd_args->set_bmc_url_arg = NULL;
+  cmd_args->set_base_os_hypervisor_url = 0;
+  cmd_args->set_base_os_hypervisor_url_arg = NULL;
+  cmd_args->read_fru = 0;
+  cmd_args->read_fru_filename = NULL;
+  cmd_args->write_fru = 0;
+  cmd_args->write_fru_filename = NULL;
+  cmd_args->device_id_set = 0;
+
   cmd_args->verbose = 0;
 
   argp_parse (&cmdline_config_file_argp,

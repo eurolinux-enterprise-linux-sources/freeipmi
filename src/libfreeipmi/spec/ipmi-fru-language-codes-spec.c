@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmi-fru-language-codes-spec.c,v 1.10 2010-02-08 22:09:40 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -153,7 +153,8 @@ const char *const ipmi_fru_language_codes[] =
     "Swedish",
     "Swahili",
     "Tamil",
-    "Tegulu",
+    /* Spec has "Tegulu", likely a typo */
+    "Telugu",
     "Tajik",
     "Thai",
     "Tigrinya",

@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmi-sdr-common.c,v 1.20 2010-02-08 22:09:40 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -68,6 +68,7 @@ sdr_init_ctx (ipmi_sdr_ctx_t ctx)
   ctx->fd = -1;
   ctx->file_size = 0;
   ctx->records_start_offset = 0;
+  ctx->records_end_offset = 0;
   ctx->sdr_cache = NULL;
   ctx->current_offset.offset = 0;
   ctx->current_offset.offset_dumped = 0;

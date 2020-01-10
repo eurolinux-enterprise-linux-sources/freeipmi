@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 FreeIPMI Core Team
+ * Copyright (C) 2008-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@
 
 const char *argp_program_version =
   "ipmi-oem - " PACKAGE_VERSION "\n"
-  "Copyright (C) 2008-2012 FreeIPMI Core Team\n"
+  "Copyright (C) 2008-2015 FreeIPMI Core Team\n"
   "This program is free software; you may redistribute it under the terms of\n"
   "the GNU General Public License.  This program has absolutely no warranty.";
 
@@ -67,6 +67,7 @@ static struct argp_option cmdline_options[] =
     ARGP_COMMON_OPTIONS_WORKAROUND_FLAGS,
     ARGP_COMMON_SDR_CACHE_OPTIONS,
     ARGP_COMMON_SDR_CACHE_OPTIONS_FILE_DIRECTORY,
+    ARGP_COMMON_TIME_OPTIONS,
     ARGP_COMMON_HOSTRANGED_OPTIONS,
     ARGP_COMMON_OPTIONS_DEBUG,
     { "list", LIST_KEY, 0, 0,
@@ -168,7 +169,7 @@ _ipmi_oem_config_file_parse (struct ipmi_oem_arguments *cmd_args)
   if (config_file_parse (cmd_args->common_args.config_file,
                          0,
                          &(cmd_args->common_args),
-                         CONFIG_FILE_INBAND | CONFIG_FILE_OUTOFBAND | CONFIG_FILE_SDR | CONFIG_FILE_HOSTRANGE,
+                         CONFIG_FILE_INBAND | CONFIG_FILE_OUTOFBAND | CONFIG_FILE_SDR | CONFIG_FILE_TIME | CONFIG_FILE_HOSTRANGE,
                          CONFIG_FILE_TOOL_IPMI_OEM,
                          &config_file_data) < 0)
     {

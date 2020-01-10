@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmi_monitoring_offsets.h,v 1.1 2010-03-19 22:07:58 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -254,6 +254,7 @@ enum ipmi_monitoring_event_offset_power_supply
     IPMI_MONITORING_EVENT_OFFSET_POWER_SUPPLY_POWER_SUPPLY_INPUT_LOST_OR_OUT_OF_RANGE     = 0x04,
     IPMI_MONITORING_EVENT_OFFSET_POWER_SUPPLY_POWER_SUPPLY_INPUT_OUT_OF_RANGE_BUT_PRESENT = 0x05,
     IPMI_MONITORING_EVENT_OFFSET_POWER_SUPPLY_CONFIGURATION_ERROR                         = 0x06,
+    IPMI_MONITORING_EVENT_OFFSET_POWER_SUPPLY_POWER_SUPPLY_INACTIVE                       = 0x07,
   };
 
 enum ipmi_monitoring_event_offset_power_unit
@@ -396,13 +397,17 @@ enum ipmi_monitoring_event_offset_boot_error
 
 enum ipmi_monitoring_event_offset_os_boot
   {
-    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_A_BOOT_COMPLETED                         = 0x00,
-    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_C_BOOT_COMPLETED                         = 0x01,
-    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_PXE_BOOT_COMPLETED                       = 0x02,
-    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_DIAGNOSTIC_BOOT_COMPLETED                = 0x03,
-    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_CD_ROM_BOOT_COMPLETED                    = 0x04,
-    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_ROM_BOOT_COMPLETED                       = 0x05,
-    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_BOOT_COMPLETED_BOOT_DEVICE_NOT_SPECIFIED = 0x06,
+    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_A_BOOT_COMPLETED                          = 0x00,
+    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_C_BOOT_COMPLETED                          = 0x01,
+    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_PXE_BOOT_COMPLETED                        = 0x02,
+    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_DIAGNOSTIC_BOOT_COMPLETED                 = 0x03,
+    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_CD_ROM_BOOT_COMPLETED                     = 0x04,
+    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_ROM_BOOT_COMPLETED                        = 0x05,
+    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_BOOT_COMPLETED_BOOT_DEVICE_NOT_SPECIFIED  = 0x06,
+    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_BASE_OS_HYPERVISOR_INSTALLATION_STARTED   = 0x07,
+    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_BASE_OS_HYPERVISOR_INSTALLATION_COMPLETED = 0x08,
+    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_BASE_OS_HYPERVISOR_INSTALLATION_ABORTED   = 0x09,
+    IPMI_MONITORING_EVENT_OFFSET_OS_BOOT_BASE_OS_HYPERVISOR_INSTALLATION_FAILED    = 0x0A,
   };
 
 enum ipmi_monitoring_event_offset_os_critical_stop

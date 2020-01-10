@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -159,3 +159,17 @@ format_kg (char *out, unsigned int outlen, const void *k_g)
 
   return (out);
 }
+
+unsigned int
+get_timestamp_flags (struct common_cmd_args *common_args, unsigned int defaultflags)
+{
+  unsigned int timestamp_flags = defaultflags;
+
+  if (common_args->utc_to_localtime)
+    timestamp_flags |= IPMI_TIMESTAMP_FLAG_UTC_TO_LOCALTIME;
+
+  if (common_args->localtime_to_utc)
+    timestamp_flags |= IPMI_TIMESTAMP_FLAG_LOCALTIME_TO_UTC;
+
+  return (timestamp_flags);
+} 

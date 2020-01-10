@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@
 
 const char *argp_program_version =
   "ipmi-sensors - " PACKAGE_VERSION "\n"
-  "Copyright (C) 2003-2012 FreeIPMI Core Team\n"
+  "Copyright (C) 2003-2015 FreeIPMI Core Team\n"
   "This program is free software; you may redistribute it under the terms of\n"
   "the GNU General Public License.  This program has absolutely no warranty.";
 
@@ -70,6 +70,7 @@ static struct argp_option cmdline_options[] =
     ARGP_COMMON_OPTIONS_WORKAROUND_FLAGS,
     ARGP_COMMON_SDR_CACHE_OPTIONS,
     ARGP_COMMON_SDR_CACHE_OPTIONS_FILE_DIRECTORY,
+    ARGP_COMMON_TIME_OPTIONS,
     ARGP_COMMON_HOSTRANGED_OPTIONS,
     ARGP_COMMON_OPTIONS_DEBUG,
     { "verbose",        VERBOSE_KEY,        0, 0,
@@ -186,13 +187,13 @@ cmdline_parse (int key, char *arg, struct argp_state *state)
       tok = strtok (arg, " ,");
       while (tok && cmd_args->record_ids_length < MAX_SENSOR_RECORD_IDS)
         {
-          errno = 0;
           if (!strcasecmp (tok, SENSOR_PARSE_ALL_STRING))
             {
               cmd_args->record_ids_length = 0;
               break;
             }
 
+          errno = 0;
           value = strtol (tok, &endptr, 10);
 
           if (errno
@@ -214,13 +215,13 @@ cmdline_parse (int key, char *arg, struct argp_state *state)
       tok = strtok (arg, " ,");
       while (tok && cmd_args->exclude_record_ids_length < MAX_SENSOR_RECORD_IDS)
         {
-          errno = 0;
           if (!strcasecmp (tok, SENSOR_PARSE_NONE_STRING))
             {
               cmd_args->exclude_record_ids_length = 0;
               break;
             }
 
+          errno = 0;
           value = strtol (tok, &endptr, 10);
 
           if (errno
@@ -344,7 +345,7 @@ _ipmi_sensors_config_file_parse (struct ipmi_sensors_arguments *cmd_args)
   if (config_file_parse (cmd_args->common_args.config_file,
                          0,
                          &(cmd_args->common_args),
-                         CONFIG_FILE_INBAND | CONFIG_FILE_OUTOFBAND | CONFIG_FILE_SDR | CONFIG_FILE_HOSTRANGE,
+                         CONFIG_FILE_INBAND | CONFIG_FILE_OUTOFBAND | CONFIG_FILE_SDR | CONFIG_FILE_TIME | CONFIG_FILE_HOSTRANGE,
                          CONFIG_FILE_TOOL_IPMI_SENSORS,
                          &config_file_data) < 0)
     {

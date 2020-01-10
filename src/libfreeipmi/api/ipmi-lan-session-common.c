@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -820,6 +820,10 @@ _api_lan_cmd_wrapper_verify_packet (ipmi_ctx_t ctx,
    *
    * For some reason, the authentication code is always blank when
    * using "Straight Password Key".
+   *
+   * Discovered on Intel Windmill/Quanta Winterfell/Wiwynn Windmill
+   *
+   * Hash is incorrect, unknown why calculation is incorrect.
    */
 
   if (check_authentication_code
@@ -2335,7 +2339,7 @@ _api_lan_2_0_cmd_send (ipmi_ctx_t ctx,
   rv = 0;
  cleanup:
   free (pkt);
-  return (0);
+  return (rv);
 }
 
 /* return receive length on success, 0 on no packet, -1 on error */

@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmiconsole_ctx.h,v 1.18 2010-02-08 22:02:30 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -33,8 +33,8 @@ int ipmiconsole_ctx_setup (ipmiconsole_ctx_t c);
 
 void ipmiconsole_ctx_cleanup (ipmiconsole_ctx_t c);
 
-/* Wrapper for list callback */
-void ipmiconsole_ctx_list_cleanup (ipmiconsole_ctx_t c);
+/* Wrapper for list callback on console_engine_ctxs_to_destroy */
+void ipmiconsole_ctx_garbage_collection_cleanup (ipmiconsole_ctx_t c);
 
 int ipmiconsole_ctx_config_setup (ipmiconsole_ctx_t c,
                                   const char *hostname,

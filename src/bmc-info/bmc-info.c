@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -528,7 +528,12 @@ display_get_device_id (bmc_info_state_data_t *state_data)
 }
 
 static int
-display_get_device_guid (bmc_info_state_data_t *state_data)
+display_guid (bmc_info_state_data_t *state_data,
+	      fiid_field_t *tmpl_cmd_get_guid_rs,
+	      int (*ipmi_cmd_get_guid_func)(ipmi_ctx_t, fiid_obj_t),
+	      char *ipmi_cmd_get_guid_description,
+	      int get_guid_only_flag,
+	      char *guid_description)
 {
   uint8_t guidbuf[BMC_INFO_BUFLEN];
   fiid_obj_t obj_cmd_rs = NULL;
@@ -536,8 +541,12 @@ display_get_device_guid (bmc_info_state_data_t *state_data)
   int rv = -1;
 
   assert (state_data);
+  assert (tmpl_cmd_get_guid_rs);
+  assert (ipmi_cmd_get_guid_func);
+  assert (ipmi_cmd_get_guid_description);
+  assert (guid_description);
 
-  if (!(obj_cmd_rs = fiid_obj_create (tmpl_cmd_get_device_guid_rs)))
+  if (!(obj_cmd_rs = fiid_obj_create (tmpl_cmd_get_guid_rs)))
     {
       pstdout_fprintf (state_data->pstate,
                        stderr,
@@ -546,10 +555,10 @@ display_get_device_guid (bmc_info_state_data_t *state_data)
       goto cleanup;
     }
 
-  if (ipmi_cmd_get_device_guid (state_data->ipmi_ctx, obj_cmd_rs) < 0)
+  if (ipmi_cmd_get_guid_func (state_data->ipmi_ctx, obj_cmd_rs) < 0)
     {
       if (!state_data->prog_data->args->get_device_guid
-          && ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+          && ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
           && ipmi_check_completion_code (obj_cmd_rs,
                                          IPMI_COMP_CODE_INVALID_COMMAND) == 1)
         {
@@ -559,7 +568,8 @@ display_get_device_guid (bmc_info_state_data_t *state_data)
 
       pstdout_fprintf (state_data->pstate,
                        stderr,
-                       "ipmi_cmd_get_device_guid: %s\n",
+                       "%s: %s\n",
+		       ipmi_cmd_get_guid_description,
                        ipmi_ctx_errormsg (state_data->ipmi_ctx));
       goto cleanup;
     }
@@ -585,6 +595,9 @@ display_get_device_guid (bmc_info_state_data_t *state_data)
       goto cleanup;
     }
 
+  if (!get_guid_only_flag)
+    pstdout_printf (state_data->pstate, "%s : ", guid_description);
+
   /* IPMI transfers the guid in least significant bit order and the
    * fields are reverse from the "Wired for Management
    * Specification".
@@ -594,36 +607,79 @@ display_get_device_guid (bmc_info_state_data_t *state_data)
    * supposed to be output in most significant byte order and hex
    * characters are to be output lower case.
    */
-  if (!state_data->prog_data->args->get_device_guid)
-    pstdout_printf (state_data->pstate, "GUID : ");
-
-  pstdout_printf (state_data->pstate,
-                  "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x\n",
-                  guidbuf[15],  /* time low */
-                  guidbuf[14],
-                  guidbuf[13],
-                  guidbuf[12],
-                  guidbuf[11],  /* time mid */
-                  guidbuf[10],
-                  guidbuf[9],   /* time high and version */
-                  guidbuf[8],
-                  guidbuf[6],   /* clock seq high and reserved - comes before clock seq low */
-                  guidbuf[7],   /* clock seq low */
-                  guidbuf[5],   /* node */
-                  guidbuf[4],
-                  guidbuf[3],
-                  guidbuf[2],
-                  guidbuf[1],
-                  guidbuf[0]);
+  if (!(state_data->prog_data->args->common_args.section_specific_workaround_flags & IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_GUID_FORMAT))
+    pstdout_printf (state_data->pstate,
+		    "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x\n",
+		    guidbuf[15],  /* time low */
+		    guidbuf[14],
+		    guidbuf[13],
+		    guidbuf[12],
+		    guidbuf[11],  /* time mid */
+		    guidbuf[10],
+		    guidbuf[9],   /* time high and version */
+		    guidbuf[8],
+		    guidbuf[7],   /* clock seq and reserved */
+		    guidbuf[6],
+		    guidbuf[5],   /* node */
+		    guidbuf[4],
+		    guidbuf[3],
+		    guidbuf[2],
+		    guidbuf[1],
+		    guidbuf[0]);
+  else
+    /* It appears some vendors are not sending the GUID in the right
+     * format, basically sending it in the format from the Wired for
+     * Management Specification.
+     */
+    pstdout_printf (state_data->pstate,
+		    "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x\n",
+		    guidbuf[3],   /* time low */
+		    guidbuf[2],
+		    guidbuf[1],
+		    guidbuf[0],
+		    guidbuf[5],   /* time mid */
+		    guidbuf[4],
+		    guidbuf[7],   /* time high and version */
+		    guidbuf[6],
+		    guidbuf[8],	  /* clock seq high and reserved - not little endian*/
+		    guidbuf[9],   /* clock seq low */
+		    guidbuf[10],   /* node - assume sent in correct order */
+		    guidbuf[11],
+		    guidbuf[12],
+		    guidbuf[13],
+		    guidbuf[14],
+		    guidbuf[15]);
 
   /* output newline if we're outputting all sections */
-  if (!state_data->prog_data->args->get_device_guid)
+  if (!get_guid_only_flag)
     pstdout_printf (state_data->pstate, "\n");
 
   rv = 0;
  cleanup:
   fiid_obj_destroy (obj_cmd_rs);
   return (rv);
+}
+
+static int
+display_get_device_guid (bmc_info_state_data_t *state_data)
+{
+  return display_guid (state_data,
+		       tmpl_cmd_get_device_guid_rs,
+		       ipmi_cmd_get_device_guid,
+		       "ipmi_cmd_get_device_guid",
+		       state_data->prog_data->args->get_device_guid,
+		       "Device GUID");
+}
+
+static int
+display_get_system_guid (bmc_info_state_data_t *state_data)
+{
+  return display_guid (state_data,
+		       tmpl_cmd_get_system_guid_rs,
+		       ipmi_cmd_get_system_guid,
+		       "ipmi_cmd_get_system_guid",
+		       state_data->prog_data->args->get_system_guid,
+		       "System GUID");
 }
 
 /* return 1 if supported, 0 if not */
@@ -639,7 +695,11 @@ display_system_info_common (bmc_info_state_data_t *state_data,
 {
   fiid_obj_t obj_cmd_first_set_rs = NULL;
   fiid_obj_t obj_cmd_rs = NULL;
-  uint8_t encoding, string_length;
+#if 0
+  /* Code currently assumes ASCII, remove to remove warning */
+  uint8_t encoding;
+#endif
+  uint8_t string_length;
   char string[BMC_INFO_SYSTEM_INFO_STRING_MAX];
   uint64_t val;
   uint8_t set_selector = 0;
@@ -712,14 +772,14 @@ display_system_info_common (bmc_info_state_data_t *state_data,
                           IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
                           obj_cmd_first_set_rs) < 0)
     {
-      if (!state_data->prog_data->args->get_system_info
-          && ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-          && (ipmi_check_completion_code (obj_cmd_first_set_rs,
-					  IPMI_COMP_CODE_INVALID_COMMAND) == 1
-	      || ipmi_check_completion_code (obj_cmd_first_set_rs,
-					     IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1
-	      || ipmi_check_completion_code (obj_cmd_first_set_rs,
-					     IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
+      if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	   && (ipmi_check_completion_code (obj_cmd_first_set_rs,
+					   IPMI_COMP_CODE_INVALID_COMMAND) == 1
+	       || ipmi_check_completion_code (obj_cmd_first_set_rs,
+					      IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
+	  || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	      && ipmi_check_completion_code (obj_cmd_first_set_rs,
+					     IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1))
         {
           rv = 0;
           goto cleanup;
@@ -746,7 +806,10 @@ display_system_info_common (bmc_info_state_data_t *state_data,
   if (!ret)
     goto output;
 
+#if 0
+  /* Code currently assumes ASCII, remove to remove warning */
   encoding = val;
+#endif
   
   if ((ret = fiid_obj_get (obj_cmd_first_set_rs,
 			   "string_length",
@@ -805,14 +868,14 @@ display_system_info_common (bmc_info_state_data_t *state_data,
                     IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
                     obj_cmd_rs) < 0)
         {
-          if (!state_data->prog_data->args->get_system_info
-              && ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-              && (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_INVALID_COMMAND) == 1
-		  || ipmi_check_completion_code (obj_cmd_rs,
-						 IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1
-		  || ipmi_check_completion_code (obj_cmd_rs,
-						 IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
+          if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	       && (ipmi_check_completion_code (obj_cmd_rs,
+					       IPMI_COMP_CODE_INVALID_COMMAND) == 1
+		   || ipmi_check_completion_code (obj_cmd_rs,
+						  IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
+	      || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+		  && ipmi_check_completion_code (obj_cmd_rs,
+						 IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1))
             {
               rv = 0;
               goto cleanup;
@@ -927,6 +990,53 @@ display_system_info_operating_system_name (bmc_info_state_data_t *state_data)
                                      "Operating System Name         :");
 }
 
+/* return 1 if supported, 0 if not */
+static int
+display_system_info_present_os_version_number (bmc_info_state_data_t *state_data)
+{
+  assert (state_data);
+
+  return display_system_info_common (state_data,
+                                     tmpl_cmd_get_system_info_parameters_present_os_version_number_first_set_rs,
+                                     tmpl_cmd_get_system_info_parameters_present_os_version_number_rs,
+                                     ipmi_cmd_get_system_info_parameters_present_os_version_number_first_set,
+                                     "ipmi_cmd_get_system_info_parameters_present_os_version_number_first_set",
+                                     ipmi_cmd_get_system_info_parameters_present_os_version_number,
+                                     "ipmi_cmd_get_system_info_parameters_present_os_version_number",
+                                     "Present OS Version Number     :");
+}
+
+/* return 1 if supported, 0 if not */
+static int
+display_system_info_bmc_url (bmc_info_state_data_t *state_data)
+{
+  assert (state_data);
+
+  return display_system_info_common (state_data,
+                                     tmpl_cmd_get_system_info_parameters_bmc_url_first_set_rs,
+                                     tmpl_cmd_get_system_info_parameters_bmc_url_rs,
+                                     ipmi_cmd_get_system_info_parameters_bmc_url_first_set,
+                                     "ipmi_cmd_get_system_info_parameters_bmc_url_first_set",
+                                     ipmi_cmd_get_system_info_parameters_bmc_url,
+                                     "ipmi_cmd_get_system_info_parameters_bmc_url",
+                                     "BMC URL                       :");
+}
+
+/* return 1 if supported, 0 if not */
+static int
+display_system_info_base_os_hypervisor_url (bmc_info_state_data_t *state_data)
+{
+  assert (state_data);
+
+  return display_system_info_common (state_data,
+                                     tmpl_cmd_get_system_info_parameters_base_os_hypervisor_url_first_set_rs,
+                                     tmpl_cmd_get_system_info_parameters_base_os_hypervisor_url_rs,
+                                     ipmi_cmd_get_system_info_parameters_base_os_hypervisor_url_first_set,
+                                     "ipmi_cmd_get_system_info_parameters_base_os_hypervisor_url_first_set",
+                                     ipmi_cmd_get_system_info_parameters_base_os_hypervisor_url,
+                                     "ipmi_cmd_get_system_info_parameters_base_os_hypervisor_url",
+                                     "Base OS/Hypervisor URL        :");
+}
 
 static int
 display_system_info (bmc_info_state_data_t *state_data)
@@ -945,20 +1055,36 @@ display_system_info (bmc_info_state_data_t *state_data)
     return (-1);
 
   if (!ret)
-    return (0);
+    goto newline_cleanup;
 
   if ((ret = display_system_info_primary_operating_system_name (state_data)) < 0)
     return (-1);
 
   if (!ret)
-    return (0);
+    goto newline_cleanup;
 
   if ((ret = display_system_info_operating_system_name (state_data)) < 0)
     return (-1);
 
   if (!ret)
-    return (0);
+    goto newline_cleanup;
 
+  /* New, may not be supported */
+  if ((ret = display_system_info_present_os_version_number (state_data)) < 0)
+    return (-1);
+
+  if (!ret)
+    goto newline_cleanup;
+
+  /* optional - if ret == 0, can still go on */
+  if ((ret = display_system_info_bmc_url (state_data)) < 0)
+    return (-1);
+
+  /* optional - if ret == 0, can still go on */
+  if ((ret = display_system_info_base_os_hypervisor_url (state_data)) < 0)
+    return (-1);
+
+ newline_cleanup:
   /* output newline if we're outputting all sections */
   if (!state_data->prog_data->args->get_system_info)
     pstdout_printf (state_data->pstate, "\n");
@@ -1276,6 +1402,9 @@ run_cmd_args (bmc_info_state_data_t *state_data)
 
   if (args->get_device_guid)
     return (display_get_device_guid (state_data));
+
+  if (args->get_system_guid)
+    return (display_get_system_guid (state_data));
  
   if (args->get_system_info)
     return (display_system_info (state_data));
@@ -1289,6 +1418,9 @@ run_cmd_args (bmc_info_state_data_t *state_data)
     goto cleanup;
 
   if (display_get_device_guid (state_data) < 0)
+    goto cleanup;
+
+  if (display_get_system_guid (state_data) < 0)
     goto cleanup;
 
   if (display_system_info (state_data) < 0)

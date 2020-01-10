@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,6 +60,8 @@ parse_inband_driver_type (const char *str)
   else if (strcasecmp (str, IPMI_PARSE_DEVICE_SUNBMC_STR) == 0
            || strcasecmp (str, IPMI_PARSE_DEVICE_SUNBMC_STR2) == 0)
     return (IPMI_DEVICE_SUNBMC);
+  else if (strcasecmp (str, IPMI_PARSE_DEVICE_INTELDCMI_STR) == 0)
+    return (IPMI_DEVICE_INTELDCMI);
 
   return (-1);
 }
@@ -250,6 +252,15 @@ _parse_workaround_flags (const char *str,
                && !strcasecmp (tok, IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_SKIP_SOL_ACTIVATION_STATUS_STR))
         (*section_specific_workaround_flags) |= IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_SKIP_SOL_ACTIVATION_STATUS;
       else if (section_specific_workaround_flags
+               && !strcasecmp (tok, IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_SKIP_CHANNEL_PAYLOAD_SUPPORT_STR))
+        (*section_specific_workaround_flags) |= IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_SKIP_CHANNEL_PAYLOAD_SUPPORT;
+      else if (section_specific_workaround_flags
+               && !strcasecmp (tok, IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_SERIAL_ALERTS_DEFERRED_STR))
+        (*section_specific_workaround_flags) |= IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_SERIAL_ALERTS_DEFERRED;
+      else if (section_specific_workaround_flags
+               && !strcasecmp (tok, IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_INCREMENT_SOL_PACKET_SEQUENCE_STR))
+        (*section_specific_workaround_flags) |= IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_INCREMENT_SOL_PACKET_SEQUENCE;
+      else if (section_specific_workaround_flags
                && !strcasecmp (tok, IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_SKIP_CHECKS_STR))
         (*section_specific_workaround_flags) |= IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_SKIP_CHECKS;
       else if (section_specific_workaround_flags
@@ -282,6 +293,12 @@ _parse_workaround_flags (const char *str,
       else if (section_specific_workaround_flags
                && !strcasecmp (tok, IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_MALFORMED_ACK_STR))
         (*section_specific_workaround_flags) |= IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_MALFORMED_ACK;
+      else if (section_specific_workaround_flags
+               && !strcasecmp (tok, IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_GUID_FORMAT_STR))
+        (*section_specific_workaround_flags) |= IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_GUID_FORMAT;
+      else if (section_specific_workaround_flags
+               && !strcasecmp (tok, IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_IPMIPING_STR))
+        (*section_specific_workaround_flags) |= IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_IPMIPING;
       else
         return (-1);
       tok = strtok (NULL, ",");

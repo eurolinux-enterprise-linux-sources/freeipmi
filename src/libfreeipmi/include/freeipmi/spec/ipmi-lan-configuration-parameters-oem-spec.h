@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,42 +23,8 @@
 extern "C" {
 #endif
 
-/******************************************* 
- * Inventec                                *
- *******************************************/
-
-/*
- * Inventec 5441/Dell Xanadu II
- * Inventec 5442/Dell Xanadu III
- */
-
-#define IPMI_LAN_CONFIGURATION_PARAMETER_OEM_INVENTEC_DHCP_RETRY 192
-
-/* w/ IPMI_LAN_CONFIGURATION_PARAMETER_OEM_INVENTEC_DHCP_RETRY */
-#define IPMI_LAN_CONFIGURATION_PARAMETER_OEM_INVENTEC_DHCP_RETRY_NO_RETRIES       0x00
-#define IPMI_LAN_CONFIGURATION_PARAMETER_OEM_INVENTEC_DHCP_RETRY_INDEFINITE_RETRY 0xFF
-
-/******************************************* 
- * Wistron                                 *
- *******************************************/
-
-/*
- * Wistron / Dell Poweredge C6220
- */
-
-#define IPMI_LAN_CONFIGURATION_PARAMETER_OEM_WISTRON_DHCP_RETRY                 192
-#define IPMI_LAN_CONFIGURATION_PARAMETER_OEM_WISTRON_LINK_STATUS_CHANGE_CONTROL 193
-
-/* w/ IPMI_LAN_CONFIGURATION_PARAMETER_OEM_WISTRON_DHCP_RETRY */
-#define IPMI_LAN_CONFIGURATION_PARAMETER_OEM_WISTRON_DHCP_RETRY_NO_RETRIES       0x00
-#define IPMI_LAN_CONFIGURATION_PARAMETER_OEM_WISTRON_DHCP_RETRY_INDEFINITE_RETRY 0xFF
-
-/* w/ IPMI_LAN_CONFIGURATION_PARAMETER_OEM_WISTRON_LINK_STATUS_CHANGE_CONTROL */
-#define IPMI_LAN_CONFIGURATION_PARAMETER_OEM_WISTRON_LINK_STATUS_CHANGE_CONTROL_BITMASK 0x80
-#define IPMI_LAN_CONFIGURATION_PARAMETER_OEM_WISTRON_LINK_STATUS_CHANGE_CONTROL_SHIFT   7
-
-#define IPMI_LAN_CONFIGURATION_PARAMETER_OEM_WISTRON_LINK_STATUS_CHANGE_CONTROL_LINK_DOWN_RESILIENCE_ENABLED 1
-#define IPMI_LAN_CONFIGURATION_PARAMETER_OEM_WISTRON_LINK_STATUS_CHANGE_CONTROL_DHCP_RE_DISCOVERY_ENABLED    0
+#include <freeipmi/spec/oem/ipmi-lan-configuration-parameters-oem-inventec-spec.h>
+#include <freeipmi/spec/oem/ipmi-lan-configuration-parameters-oem-wistron-spec.h>
 
 #ifdef __cplusplus
 }

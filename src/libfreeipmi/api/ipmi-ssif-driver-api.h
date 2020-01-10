@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,27 @@
 #include <freeipmi/api/ipmi-api.h>
 #include <freeipmi/fiid/fiid.h>
 
+#define IPMI_SSIF_RETRY_DEFAULT       5
+#define IPMI_SSIF_TIMEOUT_DEFAULT     20000000 /* 20 ms */
+
 int api_ssif_cmd (ipmi_ctx_t ctx,
 		  fiid_obj_t obj_cmd_rq,
 		  fiid_obj_t obj_cmd_rs);
+
+int api_ssif_cmd_ipmb (ipmi_ctx_t ctx,
+		       fiid_obj_t obj_cmd_rq,
+		       fiid_obj_t obj_cmd_rs);
 
 int api_ssif_cmd_raw (ipmi_ctx_t ctx,
 		      const void *buf_rq,
 		      unsigned int buf_rq_len,
 		      void *buf_rs,
 		      unsigned int buf_rs_len);
+
+int api_ssif_cmd_raw_ipmb (ipmi_ctx_t ctx,
+			   const void *buf_rq,
+			   unsigned int buf_rq_len,
+			   void *buf_rs,
+			   unsigned int buf_rs_len);
 
 #endif /* IPMI_SSIF_DRIVER_API_H */

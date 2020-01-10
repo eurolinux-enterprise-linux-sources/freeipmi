@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@
 
 #include "freeipmi/util/ipmi-device-types-util.h"
 #include "freeipmi/spec/ipmi-device-types-spec.h"
-#include "freeipmi/spec/ipmi-device-types-oem-spec.h"
 #include "freeipmi/fiid/fiid.h"
 
 #include "libcommon/ipmi-fiid-util.h"

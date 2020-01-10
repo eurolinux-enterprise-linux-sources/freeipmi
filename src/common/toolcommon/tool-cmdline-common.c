@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -439,6 +439,28 @@ common_parse_opt (int key,
       break;
 
       /* 
+       * time options
+       */
+    case ARGP_UTC_TO_LOCALTIME_KEY:
+      common_args->utc_to_localtime = 1;
+      break;
+    case ARGP_LOCALTIME_TO_UTC_KEY:
+      common_args->localtime_to_utc = 1;
+      break;
+    case ARGP_UTC_OFFSET_KEY:
+      errno = 0;
+      tmp = strtol (arg, &endptr, 0);
+      if (errno
+	  || endptr[0] != '\0'
+	  || !IPMI_UTC_OFFSET_VALID (tmp))
+        {
+          fprintf (stderr, "invalid UTC offset\n");
+          exit (EXIT_FAILURE);
+        }
+      common_args->utc_offset = tmp;
+      break;
+
+      /* 
        * hostrange options
        */
     case ARGP_BUFFER_OUTPUT_KEY:
@@ -448,6 +470,7 @@ common_parse_opt (int key,
       common_args->consolidate_output = 1;
       break;
     case ARGP_FANOUT_KEY:
+      errno = 0;
       tmp = strtol (arg, &endptr, 10);
       if (errno
 	  || endptr[0] != '\0'
@@ -513,6 +536,10 @@ _init_common_cmd_args (struct common_cmd_args *common_args)
   common_args->sdr_cache_file = NULL;
   common_args->sdr_cache_directory = NULL;
   common_args->ignore_sdr_cache = 0;
+
+  common_args->utc_to_localtime = 0;
+  common_args->localtime_to_utc = 0;
+  common_args->utc_offset = 0;
 
   common_args->buffer_output = 0;
   common_args->consolidate_output = 0;
@@ -641,3 +668,4 @@ verify_common_cmd_args (struct common_cmd_args *common_args)
       exit (EXIT_FAILURE);
     }
 }
+

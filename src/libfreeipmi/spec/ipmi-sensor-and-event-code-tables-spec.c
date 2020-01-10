@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -365,9 +365,10 @@ const char * const ipmi_sensor_type_power_supply[] =
     "Power Supply input lost or out-of-range",
     "Power Supply input out-of-range, but present",
     "Configuration error",
+    "Power Supply Inactive (in standby state)",
     NULL
   };
-unsigned int ipmi_sensor_type_power_supply_max_index = 0x06;
+unsigned int ipmi_sensor_type_power_supply_max_index = 0x07;
 
 const char * const ipmi_sensor_type_power_unit[] =
   {
@@ -545,9 +546,13 @@ const char * const ipmi_sensor_type_os_boot[] =
     "CD-ROM boot completed",
     "ROM boot completed",
     "boot completed - boot device not specified",
+    "Base OS/Hypervisor Installation started",
+    "Base OS/Hypervisor Installation completed",
+    "Base OS/Hypervisor Installation aborted",
+    "Base OS/Hypervisor Installation failed",
     NULL
   };
-unsigned int ipmi_sensor_type_os_boot_max_index = 0x06;
+unsigned int ipmi_sensor_type_os_boot_max_index = 0x0A;
 
 /* achu: modified per errata */
 const char * const ipmi_sensor_type_os_critical_stop[] =
@@ -765,9 +770,10 @@ const char * const ipmi_sensor_type_power_supply_short[] =
     "Power Supply input lost or out-of-range",
     "Power Supply input out-of-range, but present",
     "Configuration error",
+    "Power Supply Inactive",
     NULL
   };
-unsigned int ipmi_sensor_type_power_supply_short_max_index = 0x06;
+unsigned int ipmi_sensor_type_power_supply_short_max_index = 0x07;
 
 const char * const ipmi_sensor_type_power_unit_short[] =
   {
@@ -945,9 +951,13 @@ const char * const ipmi_sensor_type_os_boot_short[] =
     "CD-ROM boot completed",
     "ROM boot completed",
     "boot completed - boot device not specified",
+    "Base OS/Hypervisor Installation started",
+    "Base OS/Hypervisor Installation completed",
+    "Base OS/Hypervisor Installation aborted",
+    "Base OS/Hypervisor Installation failed",
     NULL
   };
-unsigned int ipmi_sensor_type_os_boot_short_max_index = 0x06;
+unsigned int ipmi_sensor_type_os_boot_short_max_index = 0x0A;
 
 /* achu: modified per errata */
 const char * const ipmi_sensor_type_os_critical_stop_short[] =
@@ -1067,7 +1077,7 @@ const char * const ipmi_sensor_type_session_audit_short[] =
   {
     "Session Activated",
     "Session Deactivated",
-    "Invalid Username of Password",
+    "Invalid Username or Password",
     "Invalid Password Disable",
     NULL
   };

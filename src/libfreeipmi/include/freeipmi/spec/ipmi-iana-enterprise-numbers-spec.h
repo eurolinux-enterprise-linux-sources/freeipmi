@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ extern "C" {
 #define IPMI_IANA_ENTERPRISE_ID_PEPPERCON             10437
 #define IPMI_IANA_ENTERPRISE_ID_SUPERMICRO            10876
 #define IPMI_IANA_ENTERPRISE_ID_WISTRON               11161
+#define IPMI_IANA_ENTERPRISE_ID_GIGABYTE              15370
 #define IPMI_IANA_ENTERPRISE_ID_INVENTEC              20569
 
 /* Workarounds for motherboards with invalid enterprise IDs */
@@ -45,7 +46,7 @@ extern "C" {
 /* To avoid gcc warnings, add +1 in comparison */
 #define IPMI_IANA_ENTERPRISE_ID_VALID(__iana_enterprise_id) \
   (((__iana_enterprise_id + 1) >= (0 + 1)                   \
-    && (__iana_enterprise_id) <= 38967) ? 1 : 0)
+    && (__iana_enterprise_id) <= 44603) ? 1 : 0)
 
 #define IPMI_IANA_ENTERPRISE_ID_RECOGNIZED(__iana_enterprise_id) \
   (IPMI_IANA_ENTERPRISE_ID_VALID((__iana_enterprise_id)) \

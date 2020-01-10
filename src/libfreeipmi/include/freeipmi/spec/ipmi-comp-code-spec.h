@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -204,7 +204,7 @@ extern "C" {
 #define IPMI_COMP_CODE_SEND_MESSAGE_INVALID_SESSION_HANDLE                                                            0x80
 #define IPMI_COMP_CODE_SEND_MESSAGE_INVALID_SESSION_HANDLE_STR \
   "Invalid Session Handle.  The session handle does not match up with any " \
-  "curently active sessions for this channel."
+  "currently active sessions for this channel."
 
 #define IPMI_COMP_CODE_SEND_MESSAGE_LOST_ARBITRATION                                                                  0x81
 #define IPMI_COMP_CODE_SEND_MESSAGE_LOST_ARBITRATION_STR \
@@ -307,15 +307,15 @@ extern "C" {
 
 /* IPMI_CMD_SET_SESSION_PRIVILEGE_LEVEL */
 
-#define IPMI_COMP_CODE_SET_SESSION_PRIVILEGE_LEVEL_REQUESTED_LEVEL_NOT_AVAILABLE_FOR_USER                             0x81
+#define IPMI_COMP_CODE_SET_SESSION_PRIVILEGE_LEVEL_REQUESTED_LEVEL_NOT_AVAILABLE_FOR_USER                             0x80
 #define IPMI_COMP_CODE_SET_SESSION_PRIVILEGE_LEVEL_REQUESTED_LEVEL_NOT_AVAILABLE_FOR_USER_STR \
   "Requested level not available for this user"
 
-#define IPMI_COMP_CODE_SET_SESSION_PRIVILEGE_LEVEL_REQUESTED_LEVEL_EXCEEDS_USER_PRIVILEGE_LIMIT                       0x82
+#define IPMI_COMP_CODE_SET_SESSION_PRIVILEGE_LEVEL_REQUESTED_LEVEL_EXCEEDS_USER_PRIVILEGE_LIMIT                       0x81
 #define IPMI_COMP_CODE_SET_SESSION_PRIVILEGE_LEVEL_REQUESTED_LEVEL_EXCEEDS_USER_PRIVILEGE_LIMIT_STR \
   "Requested level exceeds Channel and/or User Privilege Limit"
 
-#define IPMI_COMP_CODE_SET_SESSION_PRIVILEGE_LEVEL_CANNOT_DISABLE_USER_LEVEL_AUTHENTICATION                           0x83
+#define IPMI_COMP_CODE_SET_SESSION_PRIVILEGE_LEVEL_CANNOT_DISABLE_USER_LEVEL_AUTHENTICATION                           0x82
 #define IPMI_COMP_CODE_SET_SESSION_PRIVILEGE_LEVEL_CANNOT_DISABLE_USER_LEVEL_AUTHENTICATION_STR \
   "Cannot disable User Level authentication"
 

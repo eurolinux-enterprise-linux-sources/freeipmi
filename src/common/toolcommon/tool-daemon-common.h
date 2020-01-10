@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,16 @@
 #ifndef TOOL_DAEMON_COMMON_H
 #define TOOL_DAEMON_COMMON_H
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <stdint.h>
 #include <signal.h>
+
+#ifndef HAVE_SIGHANDLER_T
+typedef void (*sighandler_t)(int);
+#endif /* HAVE_SIGHANDLER_T */
 
 int daemonize_common (const char *pidfile);
 

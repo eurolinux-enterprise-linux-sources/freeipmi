@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,10 +29,10 @@
 #include "freeipmi/record-format/ipmi-sdr-record-format.h"
 #include "freeipmi/spec/ipmi-event-reading-type-code-spec.h"
 #include "freeipmi/spec/ipmi-sensor-types-spec.h"
-#include "freeipmi/spec/ipmi-sensor-types-oem-spec.h"
 #include "freeipmi/spec/ipmi-sensor-units-spec.h"
 #include "freeipmi/spec/ipmi-iana-enterprise-numbers-spec.h"
 #include "freeipmi/spec/ipmi-product-id-spec.h"
+#include "freeipmi/spec/oem/ipmi-sensor-types-oem-fujitsu-spec.h"
 
 #include "libcommon/ipmi-trace.h"
 
@@ -355,7 +355,7 @@ ipmi_sensor_decode_raw_value (int8_t r_exponent,
   double dval;
   uint8_t rval;
 
-  if (!value
+  if (!raw_data
       || !IPMI_SDR_ANALOG_DATA_FORMAT_VALID (analog_data_format)
       || !IPMI_SDR_LINEARIZATION_IS_LINEAR (linearization))
     {

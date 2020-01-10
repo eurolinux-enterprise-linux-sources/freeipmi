@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmiconsole_packet.c,v 1.64 2010-08-03 00:10:59 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -1191,6 +1191,7 @@ ipmiconsole_ipmi_packet_assemble (ipmiconsole_ctx_t c,
       uint8_t sol_startup_handshake;
       uint8_t authentication_activation;
       uint8_t encryption_activation;
+      uint8_t shared_serial_alert_behavior;
 
       /* IPMI Workaround
        *
@@ -1213,10 +1214,22 @@ ipmiconsole_ipmi_packet_assemble (ipmiconsole_ctx_t c,
       else
         encryption_activation = IPMI_ACTIVATE_PAYLOAD_WITH_ENCRYPTION;
 
+      /* Workaround
+       *
+       * Discovered on Intel Windmill/Quanta Winterfell/Wiwynn Windmill
+       *
+       * Nodes like this to be set, I have no idea why.  The boards
+       * don't even have serial ports.
+       */
+      if (c->config.workaround_flags & IPMICONSOLE_WORKAROUND_SERIAL_ALERTS_DEFERRED)
+	shared_serial_alert_behavior = IPMI_SERIAL_MODEM_ALERTS_DEFERRED_WHILE_SOL_ACTIVE;
+      else
+	shared_serial_alert_behavior = IPMI_SERIAL_MODEM_ALERTS_FAIL_WHILE_SOL_ACTIVE;
+
       if (fill_cmd_activate_payload_sol (IPMI_PAYLOAD_TYPE_SOL,
                                          (uint8_t)c->config.sol_payload_instance,
                                          sol_startup_handshake,
-                                         IPMI_SERIAL_MODEM_ALERTS_FAIL_WHILE_SOL_ACTIVE,
+                                         shared_serial_alert_behavior,
                                          IPMI_TEST_MODE_DEACTIVATED,
                                          authentication_activation,
                                          encryption_activation,

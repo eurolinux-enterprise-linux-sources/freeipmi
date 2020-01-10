@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,6 +53,8 @@
 #include "tool-sensor-common.h"
 #include "tool-util-common.h"
 
+#define IPMI_SEL_TIME_BUFLEN 512
+
 static int
 _display_sel_info (ipmi_sel_state_data_t *state_data)
 {
@@ -60,10 +62,8 @@ _display_sel_info (ipmi_sel_state_data_t *state_data)
   uint8_t major, minor;
   uint16_t entries, free_space;
   uint64_t val;
-  char timestr[512];
+  char timestr[IPMI_SEL_TIME_BUFLEN + 1];
   int rv = -1;
-  time_t t;
-  struct tm tm;
   uint8_t allocation_supported = 0;
 
   assert (state_data);
@@ -149,15 +149,23 @@ _display_sel_info (ipmi_sel_state_data_t *state_data)
       goto cleanup;
     }
 
-  /* Posix says individual calls need not clear/set all portions of
-   * 'struct tm', thus passing 'struct tm' between functions could
-   * have issues.  So we need to memset.
-   */
-  memset (&tm, '\0', sizeof(struct tm));
+  memset (timestr, '\0', IPMI_SEL_TIME_BUFLEN + 1);
+  
+  if (ipmi_timestamp_string ((uint32_t)val,
+			     state_data->prog_data->args->common_args.utc_offset,
+			     get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						  IPMI_TIMESTAMP_FLAG_DEFAULT), 
+			     "%m/%d/%Y - %H:%M:%S",
+			     timestr,
+			     IPMI_SEL_TIME_BUFLEN) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "ipmi_timestamp_string: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
 
-  t = val;
-  localtime_r (&t, &tm);
-  strftime (timestr, sizeof (timestr), "%m/%d/%Y - %H:%M:%S", &tm);
   pstdout_printf (state_data->pstate,
                   "Recent addition timestamp              : %s\n",
                   timestr);
@@ -171,15 +179,23 @@ _display_sel_info (ipmi_sel_state_data_t *state_data)
       goto cleanup;
     }
 
-  /* Posix says individual calls need not clear/set all portions of
-   * 'struct tm', thus passing 'struct tm' between functions could
-   * have issues.  So we need to memset.
-   */
-  memset (&tm, '\0', sizeof(struct tm));
+  memset (timestr, '\0', IPMI_SEL_TIME_BUFLEN + 1);
+  
+  if (ipmi_timestamp_string ((uint32_t)val,
+			     state_data->prog_data->args->common_args.utc_offset,
+			     get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						  IPMI_TIMESTAMP_FLAG_DEFAULT), 
+			     "%m/%d/%Y - %H:%M:%S",
+			     timestr,
+			     IPMI_SEL_TIME_BUFLEN) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "ipmi_timestamp_string: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
 
-  t = val;
-  localtime_r (&t, &tm);
-  strftime (timestr, sizeof (timestr), "%m/%d/%Y - %H:%M:%S", &tm);
   pstdout_printf (state_data->pstate,
                   "Recent erase timestamp                 : %s\n",
                   timestr);
@@ -1223,6 +1239,10 @@ _normal_output (ipmi_sel_state_data_t *state_data, uint8_t record_type)
     flags |= IPMI_SEL_STRING_FLAGS_NON_ABBREVIATED_UNITS;
   if (state_data->prog_data->args->interpret_oem_data)
     flags |= IPMI_SEL_STRING_FLAGS_INTERPRET_OEM_DATA;
+  if (state_data->prog_data->args->common_args.utc_to_localtime)
+    flags |= IPMI_SEL_STRING_FLAGS_UTC_TO_LOCALTIME;
+  if (state_data->prog_data->args->common_args.localtime_to_utc)
+    flags |= IPMI_SEL_STRING_FLAGS_LOCALTIME_TO_UTC;
 
   /* IPMI Workaround
    *
@@ -2281,7 +2301,21 @@ _ipmi_sel (pstdout_state_t pstate,
 	{
 	  pstdout_fprintf (pstate,
 			   stderr,
-			   "ipmi_sel_ctx_set_interpret: %s\n",
+			   "ipmi_sel_ctx_set_parameter: %s\n",
+			   ipmi_sel_ctx_errormsg (state_data.sel_ctx));
+	  goto cleanup;
+	}
+    }
+
+  if (prog_data->args->common_args.utc_offset)
+    {
+      if (ipmi_sel_ctx_set_parameter (state_data.sel_ctx,
+				      IPMI_SEL_PARAMETER_UTC_OFFSET,
+				      &(prog_data->args->common_args.utc_offset)) < 0)
+	{
+	  pstdout_fprintf (pstate,
+			   stderr,
+			   "ipmi_sel_ctx_set_parameter: %s\n",
 			   ipmi_sel_ctx_errormsg (state_data.sel_ctx));
 	  goto cleanup;
 	}

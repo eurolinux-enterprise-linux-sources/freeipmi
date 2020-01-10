@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -157,15 +157,8 @@ ipmi_calculate_sik (uint8_t authentication_algorithm,
     priv_byte |= 0x10;
   priv_byte |= (requested_privilege_level & 0xF);
 
-  memcpy (hash_data + hash_data_len,
-          (void *)&priv_byte,
-          sizeof (uint8_t));
-  hash_data_len += sizeof (uint8_t);
-
-  memcpy (hash_data + hash_data_len,
-          (void *)&user_name_len,
-          sizeof (uint8_t));
-  hash_data_len += sizeof (uint8_t);
+  hash_data[hash_data_len++] = priv_byte;
+  hash_data[hash_data_len++] = user_name_len;
 
   if (user_name && user_name_len > 0)
     {
@@ -1258,7 +1251,7 @@ ipmi_rmcpplus_check_rakp_4_integrity_check_value (uint8_t authentication_algorit
   rv = memcmp (digest, integrity_check_value, compare_len) ? 0 : 1;
  cleanup:
   secure_memset (buf, '\0', IPMI_MAX_KEY_DATA_LENGTH);
-  secure_memset (buf, '\0', IPMI_MAX_KEY_EXCHANGE_AUTHENTICATION_CODE_LENGTH);
+  secure_memset (digest, '\0', IPMI_MAX_KEY_EXCHANGE_AUTHENTICATION_CODE_LENGTH);
   return (rv);
 }
 

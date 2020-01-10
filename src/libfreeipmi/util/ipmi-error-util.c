@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -436,6 +436,18 @@ ipmi_completion_code_strerror_r (uint8_t cmd,
                   SNPRINTF_RETURN (IPMI_COMP_CODE_GET_CHANNEL_OEM_PAYLOAD_INFO_OEM_PAYLOAD_IANA_OR_PAYLOAD_ID_NOT_SUPPORTED_STR);
                 }
               break;
+	    case IPMI_CMD_MASTER_WRITE_READ:
+	      switch (comp_code)
+		{
+		case IPMI_COMP_CODE_MASTER_WRITE_READ_LOST_ARBITRATION:
+		  SNPRINTF_RETURN (IPMI_COMP_CODE_MASTER_WRITE_READ_LOST_ARBITRATION_STR);
+		case IPMI_COMP_CODE_MASTER_WRITE_READ_BUS_ERROR:
+		  SNPRINTF_RETURN (IPMI_COMP_CODE_MASTER_WRITE_READ_BUS_ERROR_STR);
+		case IPMI_COMP_CODE_MASTER_WRITE_READ_NAK_ON_WRITE:
+		  SNPRINTF_RETURN (IPMI_COMP_CODE_MASTER_WRITE_READ_NAK_ON_WRITE_STR);
+		case IPMI_COMP_CODE_MASTER_WRITE_READ_TRUNCATED_READ:
+		  SNPRINTF_RETURN (IPMI_COMP_CODE_MASTER_WRITE_READ_TRUNCATED_READ_STR);
+		}
             case IPMI_CMD_SUSPEND_RESUME_PAYLOAD_ENCRYPTION:
               switch (comp_code)
                 {

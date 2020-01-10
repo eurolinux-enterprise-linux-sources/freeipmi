@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,8 @@
 
 #include "ipmi-sensors.h"
 #include "ipmi-sensors-oem-inventec.h"
-#include "ipmi-sensors-oem-intel-node-manager.h"
+#include "ipmi-sensors-oem-inventec-5441.h"
+#include "ipmi-sensors-oem-inventec-5442.h"
 
 #include "freeipmi-portability.h"
 #include "pstdout.h"
@@ -59,12 +60,28 @@ ipmi_sensors_oem_inventec_output_oem_record (ipmi_sensors_state_data_t *state_da
   
   /*
    * Inventec 5441/Dell Xanadu II
+   */
+  if (state_data->oem_data.product_id == IPMI_INVENTEC_PRODUCT_ID_5441)
+    {
+      if ((ret = ipmi_sensors_oem_inventec_5441_output_oem_record (state_data,
+								   oem_record_manufacturer_id,
+								   oem_data,
+								   oem_data_len)) < 0)
+	return (-1);
+
+      if (ret)
+	return (1);
+    }
+
+  /*
    * Inventec 5442/Dell Xanadu III
    */
-  if (state_data->oem_data.product_id == IPMI_INVENTEC_PRODUCT_ID_5441
-      || state_data->oem_data.product_id == IPMI_INVENTEC_PRODUCT_ID_5442)
+  if (state_data->oem_data.product_id == IPMI_INVENTEC_PRODUCT_ID_5442)
     {
-      if ((ret = ipmi_sensors_oem_intel_node_manager_output_oem_record (state_data)) < 0)
+      if ((ret = ipmi_sensors_oem_inventec_5442_output_oem_record (state_data,
+								   oem_record_manufacturer_id,
+								   oem_data,
+								   oem_data_len)) < 0)
 	return (-1);
 
       if (ret)

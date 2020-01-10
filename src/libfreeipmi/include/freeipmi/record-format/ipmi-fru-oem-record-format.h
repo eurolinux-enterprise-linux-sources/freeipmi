@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,22 +23,9 @@
 extern "C" {
 #endif
 
-#include <freeipmi/fiid/fiid.h>
+#warning ipmi-fru-oem-record-format.h header file is deprecated
 
-/* 
- * see freeipmi/templates/ for template definitions 
- */
-
-/******************************************* 
- * Wistron                                 *
- *******************************************/
-
-/*
- * Wistron / Dell Poweredge C6220
- */
-
-/* achu: not official names, named based on use context */
-#define IPMI_FRU_OEM_WISTRON_PROPRIETARY_STRING 0xC0
+#include <freeipmi/record-format/oem/ipmi-fru-wistron-oem-record-format.h>
 
 #ifdef __cplusplus
 }

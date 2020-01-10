@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 FreeIPMI Core Team
+ * Copyright (C) 2008-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,6 +50,7 @@
 #include "ipmi-oem-fujitsu.h"
 
 #include "tool-oem-common.h"
+#include "tool-util-common.h"
 
 #include "freeipmi-portability.h"
 #include "pstdout.h"
@@ -692,7 +693,10 @@ ipmi_oem_fujitsu_get_eeprom_version_info (ipmi_oem_state_data_t *state_data)
   uint8_t minor_firmware_revision;
   uint8_t aux_firmware_revision_major;
   uint8_t aux_firmware_revision_minor;
+#if 0
+  /* unused, remove compiler warning but leave for documentation */
   uint8_t aux_firmware_revision_res;
+#endif
   char major_firmware_revision_char;
   uint8_t major_sdrr_revision;
   uint8_t minor_sdrr_revision;
@@ -826,7 +830,10 @@ ipmi_oem_fujitsu_get_eeprom_version_info (ipmi_oem_state_data_t *state_data)
   minor_firmware_revision = bytes_rs[7];
   aux_firmware_revision_major = bytes_rs[8];
   aux_firmware_revision_minor = bytes_rs[9];
+#if 0
+  /* unused, remove compiler warning but leave for documentation */
   aux_firmware_revision_res = bytes_rs[10];
+#endif
   major_firmware_revision_char = (char)bytes_rs[11];
 
   major_sdrr_revision = bytes_rs[12];
@@ -1198,8 +1205,6 @@ ipmi_oem_fujitsu_get_sel_entry_long_text (ipmi_oem_state_data_t *state_data)
   uint32_t timestamp = 0;
   uint8_t css = 0;
   uint8_t severity = 0;
-  time_t timetmp;
-  struct tm time_tm;
   char time_buf[IPMI_OEM_TIME_BUFLEN + 1];
   char data_buf[IPMI_OEM_FUJITSU_SEL_ENTRY_LONG_TEXT_MAX_DATA_LENGTH + 1];
   uint8_t data_length;
@@ -1426,16 +1431,22 @@ ipmi_oem_fujitsu_get_sel_entry_long_text (ipmi_oem_state_data_t *state_data)
       severity_str = "Unknown Severity";
     }
 
-  /* Posix says individual calls need not clear/set all portions of
-   * 'struct tm', thus passing 'struct tm' between functions could
-   * have issues.  So we need to memset.
-   */
-  memset (&time_tm, '\0', sizeof(struct tm));
-
-  timetmp = timestamp;
-  localtime_r (&timetmp, &time_tm);
   memset (time_buf, '\0', IPMI_OEM_TIME_BUFLEN + 1);
-  strftime (time_buf, IPMI_OEM_TIME_BUFLEN, "%b-%d-%Y | %H:%M:%S", &time_tm);
+  
+  if (ipmi_timestamp_string (timestamp,
+			     state_data->prog_data->args->common_args.utc_offset,
+			     get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						  IPMI_TIMESTAMP_FLAG_DEFAULT), 
+			     "%b-%d-%Y | %H:%M:%S",
+			     time_buf,
+			     IPMI_OEM_TIME_BUFLEN) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "ipmi_timestamp_string: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
 
   if (css_str)
     pstdout_printf (state_data->pstate,

@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmipower_error.c,v 1.4 2010-02-08 22:02:31 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2003-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -26,7 +26,7 @@
 /*****************************************************************************\
  *  $Id: ipmipower_error.c,v 1.4 2010-02-08 22:02:31 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -95,11 +95,10 @@ static void
 _error (const char *fmt, va_list ap)
 {
   char errbuf[IPMIPOWER_ERROR_BUFLEN];
-  int len;
 
   assert (fmt);
 
-  len = vsnprintf (errbuf, IPMIPOWER_ERROR_BUFLEN, fmt, ap);
+  vsnprintf (errbuf, IPMIPOWER_ERROR_BUFLEN, fmt, ap);
   if (power_error_flags & IPMIPOWER_ERROR_STDERR)
     {
       fprintf (stderr, "%s\r\n", errbuf);
@@ -125,11 +124,10 @@ static void
 _debug (const char *fmt, va_list ap)
 {
   char errbuf[IPMIPOWER_ERROR_BUFLEN];
-  int len;
 
   assert (fmt);
 
-  len = vsnprintf (errbuf, IPMIPOWER_ERROR_BUFLEN, fmt, ap);
+  vsnprintf (errbuf, IPMIPOWER_ERROR_BUFLEN, fmt, ap);
   if (power_error_flags & IPMIPOWER_ERROR_STDERR)
     {
       fprintf (stderr, "%s\r\n", errbuf);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 FreeIPMI Core Team
+ * Copyright (C) 2008-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #include "ipmi-oem-common.h"
 #include "ipmi-oem-dell.h"
 #include "ipmi-oem-fujitsu.h"
+#include "ipmi-oem-gigabyte.h"
 #include "ipmi-oem-ibm.h"
 #include "ipmi-oem-intel.h"
 #include "ipmi-oem-intelnm.h"
@@ -502,6 +503,31 @@ struct ipmi_oem_command oem_fujitsu[] =
     },
   };
 
+struct ipmi_oem_command oem_gigabyte[] =
+  {
+    {
+      "get-nic-mode",
+      NULL,
+      0,
+      IPMI_OEM_COMMAND_FLAGS_DEFAULT,
+      ipmi_oem_gigabyte_get_nic_mode
+    },
+    {
+      "set-nic-mode",
+      "<dedicated|shared|failover>",
+      1,
+      IPMI_OEM_COMMAND_FLAGS_DEFAULT,
+      ipmi_oem_gigabyte_set_nic_mode
+    },
+    {
+      NULL,
+      NULL,
+      0,
+      IPMI_OEM_COMMAND_FLAGS_DEFAULT,
+      NULL
+    },
+  };
+
 struct ipmi_oem_command oem_ibm[] =
   {
     {
@@ -550,22 +576,20 @@ struct ipmi_oem_command oem_intel[] =
       IPMI_OEM_COMMAND_FLAGS_DEFAULT,
       ipmi_oem_intel_set_power_restore_delay
     },
-#if 0
     {
-      "get-bmc-service-status",
+      "get-bmc-services",
       NULL,
       0,
       IPMI_OEM_COMMAND_FLAGS_DEFAULT,
-      ipmi_oem_intel_get_bmc_service_status
+      ipmi_oem_intel_get_bmc_services
     },
     {
-      "set-bmc-service-status",
-      "<enable|disable> <ssh|http|kvm>",
+      "set-bmc-services",
+      "<enable|disable> <ssh|http|rmcp|kvm>",
       2,
       IPMI_OEM_COMMAND_FLAGS_DEFAULT,
-      ipmi_oem_intel_set_bmc_service_status
+      ipmi_oem_intel_set_bmc_services
     },
-#endif
     {
       "restore-configuration",
       NULL,
@@ -586,89 +610,113 @@ struct ipmi_oem_command oem_intelnm[] =
   {
     {
       "get-node-manager-statistics",
-      "[domainid=num] [policyid=num]",
-      0,
+      "mode=globalpower|globaltemp|globalthrottling|globalvolumetricairflow|globaltempairflow|globalchassispower|policypower|policytrigger|policythrottling|hostunhandledrequests|hostresponsetime|cputhrottling|memorythrottling|hostcommfailure [domainid=platform|cpu|memory|highpowerio] [policyid=num]",
+      1,
       IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
       ipmi_oem_intelnm_get_node_manager_statistics
     },
     {
       "reset-node-manager-statistics",
-      "[domainid=num] [policyid=num]",
+      "[mode=global|policy|hostunhandledrequests|hostresponsetime|cputhrottling|memorythrottling|hostcommfailure] [domainid=platform|cpu|memory|highpowerio] [policyid=num]",
       0,
       IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
       ipmi_oem_intelnm_reset_node_manager_statistics
     },
     {
       "get-node-manager-capabilities",
-      "[domainid=num] [policytrigger=none|inlet] [policytype=powercontrol]",
+      "[domainid=platform|cpu|memory|highpowerio] [policytrigger=none|inlettemperaturelimitpolicytrigger|missingpowerreadingtimeout|timeafterplatformresettrigger|boottimepolicy] [policytype=powercontrol] [policypowerdomain=primary|secondary]",
       0,
       IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
       ipmi_oem_intelnm_get_node_manager_capabilities
     },
     {
       "node-manager-policy-control",
-      "<enable|disable> [domainid=num] [policyid=num]",
+      "<enable|disable> [domainid=platform|cpu|memory|highpowerio] [policyid=num]",
       1,
       IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
       ipmi_oem_intelnm_node_manager_policy_control
     },
     {
       "get-node-manager-policy",
-      "[domainid=num] [policyid=num]",
+      "[domainid=platform|cpu|memory|highpowerio] [policyid=num]",
       0,
       IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
       ipmi_oem_intelnm_get_node_manager_policy
     },
     {
       "set-node-manager-policy",
-      "domainid=num policyid=num policytrigger=none|inlet powerlimit=watts correctiontimelimit=ms policytriggerlimit=num statisticsreportingperiod=seconds [policystate=enable|disable] [policyexceptionaction=alert|shutdown]",
+      "domainid=platform|cpu|memory|highpowerio policyid=num policytrigger=none|inlettemperaturelimitpolicytrigger|missingpowerreadingtimeout|timeafterplatformresettrigger|boottimepolicy policytargetlimit=num [platformbootingmode=performance|power] correctiontimelimit=ms statisticsreportingperiod=seconds policystorage=persistent|volatile [policytriggerlimit=num] [policystate=enable|disable] [policyexceptionaction=alert|shutdown] [aggressivepowercorrection=automatic|notaggressive|aggressive] [policypowerdomain=primary|secondary]",
       7,
       IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
       ipmi_oem_intelnm_set_node_manager_policy
     },
     {
       "remove-node-manager-policy",
-      "domainid=num policyid=num",
+      "domainid=platform|cpu|memory|highpowerio policyid=num",
       2,
       IPMI_OEM_COMMAND_FLAGS_DEFAULT,
       ipmi_oem_intelnm_remove_node_manager_policy
     },
     {
-      "get-node-manager-alert-thresholds",
-      "[domainid=num] [policyid=num]",
+      "get-node-manager-policy-alert-thresholds",
+      "[domainid=platform|cpu|memory|highpowerio] [policyid=num]",
       0,
       IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
-      ipmi_oem_intelnm_get_node_manager_alert_thresholds
+      ipmi_oem_intelnm_get_node_manager_policy_alert_thresholds
     },
     {
-      "set-node-manager-alert-thresholds",
-      "domainid=num policyid=num [threshold1=num] [threshold2=num] [threshold3=num]",
+      "set-node-manager-policy-alert-thresholds",
+      "domainid=platform|cpu|memory|highpowerio policyid=num [threshold1=num] [threshold2=num] [threshold3=num]",
       2,
       IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
-      ipmi_oem_intelnm_set_node_manager_alert_thresholds
+      ipmi_oem_intelnm_set_node_manager_policy_alert_thresholds
+    },
+    /* legacy */
+    {
+      "get-node-manager-alert-thresholds",
+      "[domainid=platform|cpu|memory|highpowerio] [policyid=num]",
+      0,
+      IPMI_OEM_COMMAND_FLAGS_HIDDEN | IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
+      ipmi_oem_intelnm_get_node_manager_policy_alert_thresholds
+    },
+    /* legacy */
+    {
+      "set-node-manager-alert-thresholds",
+      "domainid=platform|cpu|memory|highpowerio policyid=num [threshold1=num] [threshold2=num] [threshold3=num]",
+      2,
+      IPMI_OEM_COMMAND_FLAGS_HIDDEN | IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
+      ipmi_oem_intelnm_set_node_manager_policy_alert_thresholds
     },
     {
       "get-node-manager-policy-suspend-periods",
-      "[domainid=num] [policyid=num]",
+      "[domainid=platform|cpu|memory|highpowerio] [policyid=num]",
       0,
       IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
       ipmi_oem_intelnm_get_node_manager_policy_suspend_periods
     },
     {
       "set-node-manager-policy-suspend-periods",
-      "domainid=num policyid=num suspendperiodstartX=time suspendperiodstopX=time suspendperiodrepeatX=monday|tuesday|wednesday|thursday|friday|saturday|sunday",
+      "domainid=platform|cpu|memory|highpowerio policyid=num suspendperiodstartX=time suspendperiodstopX=time suspendperiodrepeatX=monday|tuesday|wednesday|thursday|friday|saturday|sunday",
       2,
       IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
       ipmi_oem_intelnm_set_node_manager_policy_suspend_periods
     },
     {
       "set-node-manager-power-draw-range",
-      "domainid=num minpowerdrawrange=watts maxpowerdrawrange=watts",
+      "domainid=platform|cpu|memory|highpowerio minpowerdrawrange=watts maxpowerdrawrange=watts",
       3,
       IPMI_OEM_COMMAND_FLAGS_DEFAULT,
       ipmi_oem_intelnm_set_node_manager_power_draw_range
     },
 #if 0
+    {
+      "get-limiting-policy-id",
+      "domainid=platform|cpu|memory",
+      1,
+      IPMI_OEM_COMMAND_FLAGS_DEFAULT,
+      ipmi_oem_intelnm_get_limiting_policy_id
+    },
+#endif
     /* can't verify */
     {
       "get-node-manager-alert-destination",
@@ -684,7 +732,20 @@ struct ipmi_oem_command oem_intelnm[] =
       IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
       ipmi_oem_intelnm_set_node_manager_alert_destination
     },
-#endif
+    {
+      "get-turbo-synchronization-ratio",
+      "activecoresconfig=num|all [cpusocket=num|all]",
+      1,
+      IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
+      ipmi_oem_intelnm_get_turbo_synchronization_ratio
+    },
+    {
+      "set-turbo-synchronization-ratio",
+      "turboratiolimit=num|default [cpusocket=num|all] [activecoresconfig=num|all]",
+      1,
+      IPMI_OEM_COMMAND_FLAGS_OPTIONS_COUNT_VARIABLE,
+      ipmi_oem_intelnm_set_turbo_synchronization_ratio
+    },
     {
       "get-node-manager-version",
       NULL,
@@ -1198,6 +1259,27 @@ struct ipmi_oem_command oem_supermicro[] =
       ipmi_oem_supermicro_set_bmc_services_status
     },
     {
+      "get-power-supply-status",
+      "<ps_num>",
+      1,
+      IPMI_OEM_COMMAND_FLAGS_DEFAULT,
+      ipmi_oem_supermicro_get_power_supply_status
+    },
+    {
+      "get-power-supply-status2",
+      "<ps_num>",
+      1,
+      IPMI_OEM_COMMAND_FLAGS_DEFAULT,
+      ipmi_oem_supermicro_get_power_supply_status2
+    },
+    {
+      "get-pmbus-power-supply-status",
+      "<ps_num>",
+      1,
+      IPMI_OEM_COMMAND_FLAGS_DEFAULT,
+      ipmi_oem_supermicro_get_pmbus_power_supply_status
+    },
+    {
       NULL,
       NULL,
       0,
@@ -1531,6 +1613,10 @@ struct ipmi_oem_id oem_cb[] =
     {
       "IBM",
       oem_ibm
+    },
+    {
+      "GIGABYTE",
+      oem_gigabyte
     },
     {
       "Intel",

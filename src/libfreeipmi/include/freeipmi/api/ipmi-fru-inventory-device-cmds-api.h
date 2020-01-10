@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * 
  */
 /*****************************************************************************\
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -67,6 +67,13 @@ int ipmi_cmd_read_fru_data (ipmi_ctx_t ctx,
                             uint16_t fru_inventory_offset_to_read,
                             uint8_t count_to_read,
                             fiid_obj_t obj_cmd_rs);
+
+int ipmi_cmd_write_fru_data (ipmi_ctx_t ctx,
+			     uint8_t fru_device_id,
+			     uint16_t fru_inventory_offset_to_write,
+			     const void *data_to_write,
+			     unsigned int data_to_write_len,
+			     fiid_obj_t obj_cmd_rs);
 
 #ifdef __cplusplus
 }

@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmiconsole-argp.c,v 1.33 2010-02-08 22:02:30 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -58,7 +58,7 @@
 
 const char *argp_program_version =
   "ipmiconsole - " PACKAGE_VERSION "\n"
-  "Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.\n"
+  "Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.\n"
   "Copyright (C) 2006-2007 The Regents of the University of California.\n"
   "This program is free software; you may redistribute it under the terms of\n"
   "the GNU General Public License.  This program has absolutely no warranty.";
@@ -95,9 +95,9 @@ static struct argp_option cmdline_options[] =
       "Deactivate all payload instances instead of just the configured payload instance.", 46},
     { "lock-memory", LOCK_MEMORY_KEY, 0, 0,
       "Lock sensitive information (such as usernames and passwords) in memory.", 47},
-#ifndef NDEBUG
     { "debugfile", DEBUGFILE_KEY, 0, 0,
-      "Output debugging to the debugfile rather than to standard output.", 48},
+      "Output debugging to files in current directory rather than to standard output.", 48},
+#ifndef NDEBUG
     { "noraw", NORAW_KEY, 0, 0,
       "Don't enter terminal raw mode.", 49},
 #endif

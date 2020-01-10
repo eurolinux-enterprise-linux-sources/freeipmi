@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,8 @@ void api_set_api_errnum_by_ssif_errnum (ipmi_ctx_t ctx, int ssif_errnum);
 void api_set_api_errnum_by_openipmi_errnum (ipmi_ctx_t ctx, int openipmi_errnum);
 
 void api_set_api_errnum_by_sunbmc_errnum (ipmi_ctx_t ctx, int sunbmc_errnum);
+
+void api_set_api_errnum_by_inteldcmi_errnum (ipmi_ctx_t ctx, int inteldcmi_errnum);
 
 int api_ipmi_cmd (ipmi_ctx_t ctx,
                   uint8_t lun,

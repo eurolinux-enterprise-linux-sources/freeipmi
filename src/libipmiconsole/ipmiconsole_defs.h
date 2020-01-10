@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmiconsole_defs.h,v 1.80 2010-06-10 22:10:12 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -217,9 +217,12 @@ typedef enum
    | IPMICONSOLE_WORKAROUND_OPEN_SESSION_PRIVILEGE          \
    | IPMICONSOLE_WORKAROUND_NON_EMPTY_INTEGRITY_CHECK_VALUE \
    | IPMICONSOLE_WORKAROUND_NO_CHECKSUM_CHECK               \
+   | IPMICONSOLE_WORKAROUND_SERIAL_ALERTS_DEFERRED          \
+   | IPMICONSOLE_WORKAROUND_INCREMENT_SOL_PACKET_SEQUENCE   \
    | IPMICONSOLE_WORKAROUND_IGNORE_SOL_PAYLOAD_SIZE         \
    | IPMICONSOLE_WORKAROUND_IGNORE_SOL_PORT                 \
-   | IPMICONSOLE_WORKAROUND_SKIP_SOL_ACTIVATION_STATUS)
+   | IPMICONSOLE_WORKAROUND_SKIP_SOL_ACTIVATION_STATUS      \
+   | IPMICONSOLE_WORKAROUND_SKIP_CHANNEL_PAYLOAD_SUPPORT)
 
 #define IPMICONSOLE_ENGINE_MASK                    \
   (IPMICONSOLE_ENGINE_CLOSE_FD                     \
@@ -278,7 +281,7 @@ struct ipmiconsole_ctx_config {
 struct ipmiconsole_ctx_connection {
 
   /* File Descriptor User Interface */
-  int user_fd;                  /* never touched by this library */
+  int user_fd;                  /* never touched internally by the library ... */
   int ipmiconsole_fd;
   scbuf_t console_remote_console_to_bmc;
   scbuf_t console_bmc_to_remote_console;
@@ -373,6 +376,7 @@ struct ipmiconsole_ctx_session {
    * Protocol Maintenance Variables
    */
   unsigned int retransmission_count;
+  unsigned int workaround_retransmission_count; /* For IPMICONSOLE_WORKAROUND_INCREMENT_SOL_PACKET_SEQUENCE */
   unsigned int errors_count;
   unsigned int session_sequence_number_errors_count;
   unsigned int activate_payloads_count;
@@ -428,6 +432,30 @@ struct ipmiconsole_ctx_debug {
 };
 
 /* Mutexes + flags for signaling between the API and engine */
+
+/* state of context
+ * - INIT, user has not submitted it to the engine, user cleans up all
+ *   - can move to ENGINE_SUBMITTED state
+ * - ENGINE_SUBMITTED, in engine being used
+ *   - can move to USER_DESTROYED if user destroys first
+ *   - can move to GARBAGE_COLLECTION_WAIT if engine finished first
+ * - GARBAGE_COLLECTION_WAIT, waiting for user to destroy 
+ *   - can move to GARBAGE_COLLECTION_USER_DESTROYED
+ *   - can move to ENGINE_DESTROYED
+ * - GARBAGE_COLLECTION_USER_DESTROYED, user done, garbage collection
+ *   should finish up destruction
+ * - USER_DESTROYED, user destroyed, garbage collector will clean it up
+ * - ENGINE_DESTROYED, engine done with it, user side complete cleanup
+ */
+typedef enum {
+  IPMICONSOLE_CTX_STATE_INIT,
+  IPMICONSOLE_CTX_STATE_ENGINE_SUBMITTED,
+  IPMICONSOLE_CTX_STATE_GARBAGE_COLLECTION_WAIT,
+  IPMICONSOLE_CTX_STATE_GARBAGE_COLLECTION_USER_DESTROYED,
+  IPMICONSOLE_CTX_STATE_USER_DESTROYED,
+  IPMICONSOLE_CTX_STATE_ENGINE_DESTROYED,
+} ipmiconsole_ctx_state;
+
 struct ipmiconsole_ctx_signal {
   /* Conceptually there is not a race with the status.  The API initializes
    * the status, and the engine is the only one that modifies it.
@@ -439,14 +467,13 @@ struct ipmiconsole_ctx_signal {
   pthread_mutex_t status_mutex;
   unsigned int status;
 
-  /* user_has_destroyed - flags and mutex used when the user has
+  /* ctx_state - state and mutex used to determine when the user has
    * destroyed the context and it is now the responsibility of the
-   * engine/garbage-collector to cleanup.  Need to mutex to avoid
-   * destroy races.
+   * engine/garbage-collector to cleanup, or vice versa.  Need to
+   * mutex to avoid destroy races.
    */
-  pthread_mutex_t destroyed_mutex;
-  unsigned int user_has_destroyed;
-  unsigned int moved_to_destroyed;
+  pthread_mutex_t mutex_ctx_state;
+  ipmiconsole_ctx_state ctx_state;
 };
 
 /* non-blocking potential parameters */
@@ -500,6 +527,7 @@ struct ipmiconsole_ctx_fds {
    *
    */
   int user_fd;
+  int user_fd_retrieved;        /* if user ever grabbed it */
   int asynccomm[2];
 };
 

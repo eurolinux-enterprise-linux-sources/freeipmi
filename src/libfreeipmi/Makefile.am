@@ -31,6 +31,7 @@ libfreeipmi_la_CPPFLAGS = \
 libfreeipmi_la_LDFLAGS = \
 	-version-info @LIBFREEIPMI_VERSION_INFO@ $(VERSION_FLAGS) \
 	$(OTHER_FLAGS) \
+        $(PTHREAD_LIBS) \
 	@GCRYPT_LIBS@ \
 	-lm 
 
@@ -51,6 +52,8 @@ libfreeipmi_la_SOURCES = \
 	api/ipmi-event-cmds-api.c \
 	api/ipmi-firmware-firewall-command-discovery-cmds-api.c \
 	api/ipmi-fru-inventory-device-cmds-api.c \
+	api/ipmi-inteldcmi-driver-api.c \
+	api/ipmi-inteldcmi-driver-api.h \
 	api/ipmi-kcs-driver-api.c \
 	api/ipmi-kcs-driver-api.h \
 	api/ipmi-lan-cmds-api.c \
@@ -103,6 +106,7 @@ libfreeipmi_la_SOURCES = \
 	driver/ipmi-driver-trace.h \
 	driver/ipmi-semaphores.c \
 	driver/ipmi-semaphores.h \
+	driver/ipmi-inteldcmi-driver.c \
 	driver/ipmi-kcs-driver.c \
 	driver/ipmi-openipmi-driver.c \
 	driver/ipmi-sunbmc-driver.c \
@@ -158,9 +162,10 @@ libfreeipmi_la_SOURCES = \
 	locate/ipmi-locate-util.h \
 	payload/ipmi-sol-payload.c \
 	record-format/ipmi-cipher-suite-record-format.c \
+	record-format/ipmi-fru-dimmspd-record-format.c \
 	record-format/ipmi-fru-information-record-format.c \
 	record-format/ipmi-sdr-record-format.c \
-	record-format/ipmi-sdr-oem-record-format.c \
+	record-format/ipmi-sdr-oem-intel-node-manager-record-format.c \
 	record-format/ipmi-sel-record-format.c \
 	sdr/ipmi-sdr.c \
 	sdr/ipmi-sdr-common.c \
@@ -169,7 +174,7 @@ libfreeipmi_la_SOURCES = \
 	sdr/ipmi-sdr-defs.h \
 	sdr/ipmi-sdr-cache-delete.c \
 	sdr/ipmi-sdr-cache-read.c \
-	sdr/ipmi-sdr-oem.c \
+	sdr/ipmi-sdr-oem-intel-node-manager.c \
 	sdr/ipmi-sdr-parse.c \
 	sdr/ipmi-sdr-parse-util.c \
 	sdr/ipmi-sdr-stats.c \
@@ -182,24 +187,48 @@ libfreeipmi_la_SOURCES = \
 	sel/ipmi-sel-defs.h \
 	sel/ipmi-sel-string.c \
 	sel/ipmi-sel-string.h \
-	sel/ipmi-sel-string-dell.c \
-	sel/ipmi-sel-string-dell.h \
-	sel/ipmi-sel-string-fujitsu.c \
-	sel/ipmi-sel-string-fujitsu.h \
-	sel/ipmi-sel-string-intel.c \
-	sel/ipmi-sel-string-intel.h \
+	sel/ipmi-sel-string-dell-poweredge.c \
+	sel/ipmi-sel-string-fujitsu-irmc-common.c \
+	sel/ipmi-sel-string-gigabyte-md90fs0zb.c \
 	sel/ipmi-sel-string-intel-node-manager.c \
 	sel/ipmi-sel-string-intel-node-manager.h \
-	sel/ipmi-sel-string-inventec.c \
-	sel/ipmi-sel-string-inventec.h \
-	sel/ipmi-sel-string-quanta.c \
-	sel/ipmi-sel-string-quanta.h \
-	sel/ipmi-sel-string-sun.c \
-	sel/ipmi-sel-string-sun.h \
-	sel/ipmi-sel-string-supermicro.c \
-	sel/ipmi-sel-string-supermicro.h \
-	sel/ipmi-sel-string-wistron.c \
-	sel/ipmi-sel-string-wistron.h \
+	sel/ipmi-sel-string-intel-s5500wb.c \
+	sel/ipmi-sel-string-intel-quanta-qssc-s4r.c \
+	sel/ipmi-sel-string-intel-s2600jf.c \
+	sel/ipmi-sel-string-intel-windmill.c \
+	sel/ipmi-sel-string-intel-e52600v3-common.c \
+	sel/ipmi-sel-string-intel-e52600v3-common.h \
+	sel/ipmi-sel-string-intel-s2600kp.c \
+	sel/ipmi-sel-string-intel-s2600wt-common.c \
+	sel/ipmi-sel-string-inventec-common.c \
+	sel/ipmi-sel-string-inventec-common.h \
+	sel/ipmi-sel-string-inventec-5441.c \
+	sel/ipmi-sel-string-inventec-5442.c \
+	sel/ipmi-sel-string-linux-kernel.c \
+	sel/ipmi-sel-string-linux-kernel.h \
+	sel/ipmi-sel-string-quanta-s99q.c \
+	sel/ipmi-sel-string-sun-x4140.c \
+	sel/ipmi-sel-string-supermicro-common.c \
+	sel/ipmi-sel-string-supermicro-common.h \
+	sel/ipmi-sel-string-supermicro-magnum-technologies-x8dtl.c \
+	sel/ipmi-sel-string-supermicro-peppercon-common.c \
+	sel/ipmi-sel-string-supermicro-h8dg6.c \
+	sel/ipmi-sel-string-supermicro-h8dgu-f.c \
+	sel/ipmi-sel-string-supermicro-h8dgu.c \
+	sel/ipmi-sel-string-supermicro-h8sgl-f.c \
+	sel/ipmi-sel-string-supermicro-x8dt-common.c \
+	sel/ipmi-sel-string-supermicro-x8dtl-common.c \
+	sel/ipmi-sel-string-supermicro-x8dtnplus-f.c \
+	sel/ipmi-sel-string-supermicro-x8dtu-6plus.c \
+	sel/ipmi-sel-string-supermicro-x8sie.c \
+	sel/ipmi-sel-string-supermicro-x8sil-f.c \
+	sel/ipmi-sel-string-supermicro-x9dri-f.c \
+	sel/ipmi-sel-string-supermicro-x9dri-ln4f-plus.c \
+	sel/ipmi-sel-string-supermicro-x9sca-f-o.c \
+	sel/ipmi-sel-string-supermicro-x9sc_common.c \
+	sel/ipmi-sel-string-supermicro-x9scm-iif.c \
+	sel/ipmi-sel-string-supermicro-x9spu-f-o.c \
+	sel/ipmi-sel-string-wistron-c6220.c \
 	sel/ipmi-sel-trace.h \
 	sel/ipmi-sel-util.c \
 	sel/ipmi-sel-util.h \
@@ -213,8 +242,13 @@ libfreeipmi_la_SOURCES = \
 	spec/ipmi-fru-chassis-types-spec.c \
 	spec/ipmi-fru-language-codes-spec.c \
 	spec/ipmi-iana-enterprise-numbers-spec.c \
+	spec/ipmi-jedec-manufacturer-identification-code-spec.c \
 	spec/ipmi-sensor-and-event-code-tables-spec.c \
-	spec/ipmi-sensor-and-event-code-tables-oem-spec.c \
+	spec/ipmi-sensor-and-event-code-tables-oem-dell-spec.c \
+	spec/ipmi-sensor-and-event-code-tables-oem-fujitsu-spec.c \
+	spec/ipmi-sensor-and-event-code-tables-oem-hp-spec.c \
+	spec/ipmi-sensor-and-event-code-tables-oem-intel-spec.c \
+	spec/ipmi-sensor-and-event-code-tables-oem-wistron-spec.c \
 	spec/ipmi-sensor-types-spec.c \
 	spec/ipmi-sensor-units-spec.c \
 	util/ipmi-channel-util.c \
@@ -226,11 +260,13 @@ libfreeipmi_la_SOURCES = \
 	util/ipmi-error-util.c \
 	util/ipmi-iana-enterprise-numbers-util.c \
 	util/ipmi-ipmb-util.c \
+	util/ipmi-jedec-manufacturer-identification-code-util.c \
 	util/ipmi-lan-util.c \
 	util/ipmi-outofband-util.c \
 	util/ipmi-rmcpplus-util.c \
 	util/ipmi-sensor-and-event-code-tables-util.c \
 	util/ipmi-sensor-util.c \
+	util/ipmi-timestamp-util.c \
 	util/ipmi-util.c \
 	util/rmcp-util.c
 

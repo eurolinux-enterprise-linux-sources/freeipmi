@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmi-dcmi.c,v 1.15 2010-07-27 18:01:43 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2009-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2009-2015 Lawrence Livermore National Security, LLC.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
  *  LLNL-CODE-413270
@@ -63,6 +63,8 @@
 #define IPMI_DCMI_MAX_RECORD_IDS_BUFLEN 1024
 
 #define IPMI_DCMI_ERROR_BUFLEN          1024
+
+#define IPMI_DCMI_TIME_BUFLEN           512
 
 /* return 1 on output success, 0 on no output, -1 on error */
 static int
@@ -1161,7 +1163,7 @@ get_asset_tag (ipmi_dcmi_state_data_t *state_data)
           && asset_tag_data[1] == IPMI_DCMI_ASSET_TAG_UTF8_BOM_BYTE1
           && asset_tag_data[2] == IPMI_DCMI_ASSET_TAG_UTF8_BOM_BYTE2)
 	/* achu: I think this is right for UTF-8 in libc and is
-	 * portable, but I would be some systems won't like this.
+	 * portable, but I would bet some systems won't like this.
 	 */
         pstdout_printf (state_data->pstate,
                         "%ls\n",
@@ -1673,9 +1675,7 @@ _output_power_statistics (ipmi_dcmi_state_data_t *state_data,
   uint32_t statistics_reporting_time_period;
   uint8_t power_measurement;
   uint64_t val;
-  char timestr[512];
-  time_t t;
-  struct tm tm;
+  char timestr[IPMI_DCMI_TIME_BUFLEN + 1];
   int rv = -1;
 
   assert (state_data);
@@ -1801,15 +1801,22 @@ _output_power_statistics (ipmi_dcmi_state_data_t *state_data,
                   "Average Power over sampling duration : %u watts\n",
                   average_power_over_sampling_duration);
 
-  /* Posix says individual calls need not clear/set all portions of
-   * 'struct tm', thus passing 'struct tm' between functions could
-   * have issues.  So we need to memset.
-   */
-  memset (&tm, '\0', sizeof(struct tm));
+  memset (timestr, '\0', IPMI_DCMI_TIME_BUFLEN + 1);
 
-  t = time_stamp;
-  localtime_r (&t, &tm);
-  strftime (timestr, sizeof (timestr), "%m/%d/%Y - %H:%M:%S", &tm);
+  if (ipmi_timestamp_string (time_stamp,
+			     state_data->prog_data->args->common_args.utc_offset,
+			     get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						  IPMI_TIMESTAMP_FLAG_DEFAULT), 
+			     "%m/%d/%Y - %H:%M:%S",
+			     timestr,
+			     IPMI_DCMI_TIME_BUFLEN) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "ipmi_timestamp_string: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
 
   pstdout_printf (state_data->pstate,
                   "Time Stamp                           : %s\n",
@@ -1929,8 +1936,8 @@ _get_power_limit (ipmi_dcmi_state_data_t *state_data,
    * LIMIT' (i.e. is "set" a verb or part of a proper noun referencing
    * the DCMI command).  Confounding this issue is the fact that the
    * example implementation in Intel's DCMItool implements the former,
-   * while the DCMI Conformance test suite implements the later.  In
-   * addition to this, with the later interpretation, it need not be
+   * while the DCMI Conformance test suite implements the latter.  In
+   * addition to this, with the latter interpretation, it need not be
    * an indication of an error, but rather a flag.  So the rest of the
    * packet can be completely full of legitimate data.
    *
@@ -2166,8 +2173,8 @@ set_power_limit (ipmi_dcmi_state_data_t *state_data)
        * or part of a proper noun referencing the DCMI command).
        * Confounding this issue is the fact that the example
        * implementation in Intel's DCMItool implements the former,
-       * while the DCMI Conformance test suite implements the later.
-       * In addition to this, with the later interpretation, it need
+       * while the DCMI Conformance test suite implements the latter.
+       * In addition to this, with the latter interpretation, it need
        * not be an indication of an error, but rather a flag.  So the
        * rest of the packet can be completely full of legitimate data.
        * 

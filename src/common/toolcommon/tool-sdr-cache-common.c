@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -184,7 +184,7 @@ _get_home_directory (pstdout_state_t pstate,
   rv = 0;
  cleanup:
   free (tbuf);
-  return (0);
+  return (rv);
 }
 
 static int

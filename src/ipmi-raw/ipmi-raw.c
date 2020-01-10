@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2012 FreeIPMI Core Team
+ * Copyright (C) 2005-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -123,6 +123,7 @@ string2bytes (ipmi_raw_state_data_t *state_data,
   char *ptr = NULL;
   char *endptr = NULL;
   char *token = NULL;
+  int delimbytes = 0;
   int count = 0;
   unsigned int i = 0;
   unsigned int l = 0;
@@ -138,14 +139,20 @@ string2bytes (ipmi_raw_state_data_t *state_data,
   *buf = NULL;
   *len = 0;
 
-  for (i = 0, count = 0; line[i]; i++)
+  for (i = 0, delimbytes = 0; line[i]; i++)
     {
       if (strchr ((const char*)delim, line[i]))
-        count++;
+        delimbytes++;
     }
-  count++;
 
-  if (!(*buf = calloc ((strlen (line) - count), 1)))
+  /* Check for empty line */
+  if (delimbytes >= strlen (line))
+    {
+      *len = count;
+      return (0);
+    }
+
+  if (!(*buf = calloc ((strlen (line) - delimbytes), 1)))
     {
       pstdout_perror (state_data->pstate, "calloc");
       goto cleanup;
@@ -157,7 +164,6 @@ string2bytes (ipmi_raw_state_data_t *state_data,
       goto cleanup;
     }
   ptr = str;
-  count = 0;
 
   while (1)
     {
@@ -239,7 +245,6 @@ string2bytes (ipmi_raw_state_data_t *state_data,
 static int
 ipmi_raw_stream (ipmi_raw_state_data_t *state_data, FILE *stream)
 {
-  struct ipmi_raw_arguments *args;
   char *line = NULL;
   unsigned int line_count = 0;
   size_t n = 0;
@@ -252,8 +257,6 @@ ipmi_raw_stream (ipmi_raw_state_data_t *state_data, FILE *stream)
 
   assert (state_data);
   assert (stream);
-
-  args = state_data->prog_data->args;
 
   while (1)
     {
@@ -273,6 +276,10 @@ ipmi_raw_stream (ipmi_raw_state_data_t *state_data, FILE *stream)
        */
       if (string2bytes (state_data, line, &bytes_rq, &send_len, line_count) < 0)
         goto cleanup;
+
+      /* Check for empty line */
+      if (!send_len)
+	continue;
 
       if (send_len <= 2)
         {

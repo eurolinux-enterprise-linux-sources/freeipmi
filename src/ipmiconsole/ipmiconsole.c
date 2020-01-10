@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmiconsole.c,v 1.73 2010-06-10 22:18:23 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -335,6 +335,12 @@ main (int argc, char **argv)
     ipmi_config.workaround_flags |= IPMICONSOLE_WORKAROUND_IGNORE_SOL_PORT;
   if (cmd_args.common_args.section_specific_workaround_flags & IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_SKIP_SOL_ACTIVATION_STATUS)
     ipmi_config.workaround_flags |= IPMICONSOLE_WORKAROUND_SKIP_SOL_ACTIVATION_STATUS;
+  if (cmd_args.common_args.section_specific_workaround_flags & IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_SKIP_CHANNEL_PAYLOAD_SUPPORT)
+    ipmi_config.workaround_flags |= IPMICONSOLE_WORKAROUND_SKIP_CHANNEL_PAYLOAD_SUPPORT;
+  if (cmd_args.common_args.section_specific_workaround_flags & IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_SERIAL_ALERTS_DEFERRED)
+    ipmi_config.workaround_flags |= IPMICONSOLE_WORKAROUND_SERIAL_ALERTS_DEFERRED;
+  if (cmd_args.common_args.section_specific_workaround_flags & IPMI_PARSE_SECTION_SPECIFIC_WORKAROUND_FLAGS_INCREMENT_SOL_PACKET_SEQUENCE)
+    ipmi_config.workaround_flags |= IPMICONSOLE_WORKAROUND_INCREMENT_SOL_PACKET_SEQUENCE;
 
   memset (&protocol_config, '\0', sizeof (struct ipmiconsole_protocol_config));
   protocol_config.session_timeout_len = cmd_args.common_args.session_timeout;

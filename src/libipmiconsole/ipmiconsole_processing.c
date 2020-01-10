@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmiconsole_processing.c,v 1.112 2010-08-03 00:10:59 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -472,6 +472,7 @@ _receive_ipmi_packet_data_reset (ipmiconsole_ctx_t c)
   assert (c->magic == IPMICONSOLE_CTX_MAGIC);
 
   c->session.retransmission_count = 0;
+  c->session.workaround_retransmission_count = 0;
   c->session.errors_count = 0;
   c->session.session_sequence_number_errors_count = 0;
   if (gettimeofday (&(c->session.last_ipmi_packet_received), NULL) < 0)
@@ -1639,15 +1640,45 @@ _sol_retransmission_timeout (ipmiconsole_ctx_t c, int *dont_deactivate_flag)
        * deactivating.  We don't want to deactivate the SOL payload,
        * because that would kill the new session's SOL.
        */ 
+
+      /* Workaround
+       *
+       * Discovered on Intel Windmill/Quanta Winterfell/Wiwynn Windmill
+       *
+       * BMC gets stuck.  This seems to get it unstuck.
+       */
+      if (c->config.workaround_flags & IPMICONSOLE_WORKAROUND_INCREMENT_SOL_PACKET_SEQUENCE)
+	{
+	  c->session.workaround_retransmission_count++;
+
+	  if (c->session.workaround_retransmission_count < c->config.maximum_retransmission_count)
+	    {
+	      /* Only increment at most once */
+	      if (c->session.workaround_retransmission_count == 1)
+		{
+		  IPMICONSOLE_CTX_DEBUG (c, ("incrementing sol packet sequence number to workaround issue"));
+		  c->session.sol_input_packet_sequence_number++;
+		  if (c->session.sol_input_packet_sequence_number > IPMI_SOL_PACKET_SEQUENCE_NUMBER_MAX)
+		    /* Sequence number 0 is special, so start at 1 */
+		    c->session.sol_input_packet_sequence_number = 1;
+		}
+
+	      goto send_sol_packet;
+	    }
+	}
+
       (*dont_deactivate_flag) = 1;
 
       IPMICONSOLE_CTX_DEBUG (c, ("closing session due to excessive sol retransmissions"));
       ipmiconsole_ctx_set_errnum (c, IPMICONSOLE_ERR_EXCESS_RETRANSMISSIONS_SENT);
       return (-1);
     }
+
 #if 0
   IPMICONSOLE_CTX_DEBUG (c, ("sol retransmission: retransmission_count = %d; maximum_retransmission_count = %d; protocol_state = %d", c->session.retransmission_count, c->config.maximum_retransmission_count, c->session.protocol_state));
 #endif
+
+ send_sol_packet:
 
   if (!c->session.sol_input_waiting_for_break_ack)
     {
@@ -2408,7 +2439,7 @@ _check_payload_sizes_legitimate (ipmiconsole_ctx_t c)
           && max_outbound_payload_size >= IPMICONSOLE_MIN_CHARACTER_DATA + sol_hdr_len
           && max_outbound_payload_size <= IPMICONSOLE_MAX_CHARACTER_DATA + sol_hdr_len)
         {
-          c->session.max_sol_character_send_size = max_outbound_payload_size - sol_hdr_len;
+          c->session.max_sol_character_send_size = max_inbound_payload_size - sol_hdr_len;
           return (1);
         }
     }
@@ -2506,7 +2537,10 @@ _sol_bmc_to_remote_console_packet (ipmiconsole_ctx_t c, int *sol_deactivating_fl
   uint8_t packet_sequence_number;
   uint8_t packet_ack_nack_sequence_number;
   uint8_t accepted_character_count;
+#if 0
+  /* See below on implementation note */
   uint8_t break_condition;
+#endif
   uint8_t transmit_overrun;
   uint8_t sol_deactivating;
   uint8_t nack;
@@ -2572,6 +2606,8 @@ _sol_bmc_to_remote_console_packet (ipmiconsole_ctx_t c, int *sol_deactivating_fl
     }
   accepted_character_count = val;
 
+#if 0
+  /* See below on implementation note */
   if (FIID_OBJ_GET (c->connection.obj_sol_payload_data_rs,
                     "break_condition",
                     &val) < 0)
@@ -2582,6 +2618,7 @@ _sol_bmc_to_remote_console_packet (ipmiconsole_ctx_t c, int *sol_deactivating_fl
       goto cleanup;
     }
   break_condition = val;
+#endif
 
   if (FIID_OBJ_GET (c->connection.obj_sol_payload_data_rs,
                     "transmit_overrun",
@@ -3105,11 +3142,14 @@ _process_protocol_state_set_session_privilege_level_sent (ipmiconsole_ctx_t c)
   /* IPMI Workaround
    *
    * Discovered on Sun Fire 4100.
+   * Discovered on Intel Windmill/Quanta Winterfell/Wiwynn Windmill
    *
-   * The Get Channel Payload Support isn't supported in Sun's.  Skip this
-   * part of the state machine and pray for the best I guess.
+   * The Get Channel Payload Support isn't supported.  Skip this part
+   * of the state machine and pray for the best I guess.
+   * 
    */
-  if (c->config.workaround_flags & IPMICONSOLE_WORKAROUND_SUN_2_0_SESSION)
+  if (c->config.workaround_flags & IPMICONSOLE_WORKAROUND_SUN_2_0_SESSION
+      || c->config.workaround_flags & IPMICONSOLE_WORKAROUND_SKIP_CHANNEL_PAYLOAD_SUPPORT)
     {
       if (_send_ipmi_packet (c, IPMICONSOLE_PACKET_TYPE_GET_PAYLOAD_ACTIVATION_STATUS_RQ) < 0)
         {

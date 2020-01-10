@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,32 @@
 #include "libcommon/ipmi-trace.h"
 
 #include "freeipmi-portability.h"
+
+ssize_t
+ipmi_network_sendto (int s,
+		     const void *buf,
+		     size_t len,
+		     int flags,
+		     const struct sockaddr *to,
+		     socklen_t tolen)
+{
+  ssize_t rv;
+
+  if (!buf
+      || !len)
+    {
+      SET_ERRNO (EINVAL);
+      return (-1);
+    }
+
+  if ((rv = sendto (s, buf, len, flags, to, tolen)) < 0)
+    {
+      ERRNO_TRACE (errno);
+      return (-1);
+    }
+
+  return (rv);
+}
 
 ssize_t
 ipmi_network_recvfrom (int s,

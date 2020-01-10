@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmi-dcmi-argp.c,v 1.10 2010-05-17 17:42:45 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2009-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2009-2015 Lawrence Livermore National Security, LLC.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
  *  LLNL-CODE-413270
@@ -50,7 +50,7 @@
 
 const char *argp_program_version =
   "ipmi-dcmi - " PACKAGE_VERSION "\n"
-  "Copyright (C) 2009-2012 FreeIPMI Core Team\n"
+  "Copyright (C) 2009-2015 FreeIPMI Core Team\n"
   "This program is free software; you may redistribute it under the terms of\n"
   "the GNU General Public License.  This program has absolutely no warranty.";
 
@@ -72,6 +72,7 @@ static struct argp_option cmdline_options[] =
     ARGP_COMMON_OPTIONS_PRIVILEGE_LEVEL,
     ARGP_COMMON_OPTIONS_CONFIG_FILE,
     ARGP_COMMON_OPTIONS_WORKAROUND_FLAGS,
+    ARGP_COMMON_TIME_OPTIONS,
     ARGP_COMMON_HOSTRANGED_OPTIONS,
     ARGP_COMMON_OPTIONS_DEBUG,
     { "get-dcmi-capability-info", GET_DCMI_CAPABILITY_INFO, NULL, 0,
@@ -318,7 +319,7 @@ _ipmi_dcmi_config_file_parse (struct ipmi_dcmi_arguments *cmd_args)
   if (config_file_parse (cmd_args->common_args.config_file,
                          0,
                          &(cmd_args->common_args),
-                         CONFIG_FILE_INBAND | CONFIG_FILE_OUTOFBAND | CONFIG_FILE_HOSTRANGE,
+                         CONFIG_FILE_INBAND | CONFIG_FILE_OUTOFBAND | CONFIG_FILE_TIME | CONFIG_FILE_HOSTRANGE,
                          CONFIG_FILE_TOOL_IPMI_DCMI,
                          &config_file_data) < 0)
     {

@@ -1,7 +1,7 @@
 .\"#############################################################################
 .\"$Id: ipmi-dcmi.8.pre.in,v 1.8 2010-02-08 22:02:30 chu11 Exp $
 .\"#############################################################################
-.\"  Copyright (C) 2009-2012 Lawrence Livermore National Security, LLC.
+.\"  Copyright (C) 2009-2015 Lawrence Livermore National Security, LLC.
 .\"  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
 .\"  Written by Albert Chu <chu11@llnl.gov>
 .\"  LLNL-CODE-413270
@@ -38,6 +38,9 @@ an exception action, power limit, and correction time limit, power
 usage in a data center can be managed more affectively.  Please see
 \fB\-\-set\-power\-limit\fR option below for more information.
 
+DCMI can also be configured using the \fIdcmi\fR category in
+.B ipmi-config(8).
+
 The DCMI specification encompasses many traditional IPMI features that
 are not implemented directly in this tool.  Please see
 .B ipmiconsole(8)
@@ -53,7 +56,7 @@ for device and globally unique ID (guid) information,
 .B ipmi-sensors(8)
 for sensor readings,
 and
-.B bmc-config(8)
+.B ipmi-config(8)
 for configuration.
 
 #include <@top_srcdir@/man/manpage-common-table-of-contents.man>
@@ -140,6 +143,8 @@ the \fB\-\-set\-power\-limit\fR option.
 \fB\-\-activate\-deactivate\-power\-limit\fR=\fIOPERATION\fR
 Activate or deactivate power limit.  Allowed values: ACTIVATE, DEACTIVATE.
 #include <@top_srcdir@/man/manpage-common-interpret-oem-data.man>
+#include <@top_srcdir@/man/manpage-common-time-options-heading.man>
+#include <@top_srcdir@/man/manpage-common-time-options.man>
 #include <@top_srcdir@/man/manpage-common-hostranged-options-header.man>
 #include <@top_srcdir@/man/manpage-common-hostranged-buffer.man>
 #include <@top_srcdir@/man/manpage-common-hostranged-consolidate.man>
@@ -184,9 +189,9 @@ Get power limit across a cluster using IPMI over LAN.
 #include <@top_srcdir@/man/manpage-common-known-issues.man>
 #include <@top_srcdir@/man/manpage-common-reporting-bugs.man>
 .SH "COPYRIGHT"
-Copyright (C) 2009-2012 Lawrence Livermore National Security, LLC.
+Copyright (C) 2009-2015 Lawrence Livermore National Security, LLC.
 #include <@top_srcdir@/man/manpage-common-gpl-program-text.man>
 .SH "SEE ALSO"
-freeipmi(7), bmc-config(8), ipmi-chassis(8), ipmi-sel(8),
+freeipmi(7), ipmi-chassis(8), ipmi-config(8), ipmi-sel(8),
 ipmi-sensors(8), ipmiconsole(8), ipmipower(8)
 #include <@top_srcdir@/man/manpage-common-homepage.man>

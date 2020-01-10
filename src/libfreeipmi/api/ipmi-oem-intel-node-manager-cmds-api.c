@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -136,9 +136,12 @@ ipmi_cmd_oem_intel_node_manager_set_node_manager_policy (ipmi_ctx_t ctx,
                                                          uint8_t policy_id,
                                                          uint8_t policy_trigger_type,
                                                          uint8_t policy_configuration_action,
+							 uint8_t aggressive_cpu_power_correction,
+							 uint8_t policy_storage_option,
                                                          uint8_t policy_exception_actions_send_alert,
                                                          uint8_t policy_exception_actions_shutdown_system,
-                                                         uint16_t power_limit,
+							 uint8_t policy_power_domain,
+                                                         uint16_t policy_target_limit,
                                                          uint32_t correction_time_limit,
                                                          uint16_t policy_trigger_limit,
                                                          uint16_t statistics_reporting_period,
@@ -178,9 +181,12 @@ ipmi_cmd_oem_intel_node_manager_set_node_manager_policy (ipmi_ctx_t ctx,
                                                                policy_id,
                                                                policy_trigger_type,
                                                                policy_configuration_action,
+							       aggressive_cpu_power_correction,
+							       policy_storage_option,
                                                                policy_exception_actions_send_alert,
                                                                policy_exception_actions_shutdown_system,
-                                                               power_limit,
+							       policy_power_domain,
+                                                               policy_target_limit,
                                                                correction_time_limit,
                                                                policy_trigger_limit,
                                                                statistics_reporting_period,
@@ -225,6 +231,113 @@ ipmi_cmd_oem_intel_node_manager_set_node_manager_policy (ipmi_ctx_t ctx,
   return (rv);
 }
   
+int
+ipmi_cmd_oem_intel_node_manager_set_node_manager_policy_boot_time_policy (ipmi_ctx_t ctx,
+									  uint8_t target_channel_number,
+									  uint8_t target_slave_address,
+									  uint8_t target_lun,
+									  uint8_t domain_id,
+									  uint8_t policy_enabled,
+									  uint8_t policy_id,
+									  uint8_t policy_trigger_type,
+									  uint8_t policy_configuration_action,
+									  uint8_t aggressive_cpu_power_correction,
+									  uint8_t policy_storage_option,
+									  uint8_t policy_exception_actions_send_alert,
+									  uint8_t policy_exception_actions_shutdown_system,
+									  uint8_t policy_power_domain,
+									  uint8_t platform_booting_mode,
+									  uint8_t cores_disabled,
+									  uint32_t correction_time_limit,
+									  uint16_t policy_trigger_limit,
+									  uint16_t statistics_reporting_period,
+									  fiid_obj_t obj_cmd_rs)
+{
+  fiid_obj_t obj_cmd_rq = NULL;
+  int rv = -1;
+
+  if (!ctx || ctx->magic != IPMI_CTX_MAGIC)
+    {
+      ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+      return (-1);
+    }
+
+  /* remaining parameter checks in fill function */
+  if (!fiid_obj_valid (obj_cmd_rs))
+    {
+      API_SET_ERRNUM (ctx, IPMI_ERR_PARAMETERS);
+      return (-1);
+    }
+
+  if (FIID_OBJ_TEMPLATE_COMPARE (obj_cmd_rs,
+                                 tmpl_cmd_oem_intel_node_manager_set_node_manager_policy_rs) < 0)
+    {
+      API_FIID_OBJECT_ERROR_TO_API_ERRNUM (ctx, obj_cmd_rs);
+      return (-1);
+    }
+
+  if (!(obj_cmd_rq = fiid_obj_create (tmpl_cmd_oem_intel_node_manager_set_node_manager_policy_rq)))
+    {
+      API_ERRNO_TO_API_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+
+  if (fill_cmd_oem_intel_node_manager_set_node_manager_policy_boot_time_policy (domain_id,
+										policy_enabled,
+										policy_id,
+										policy_trigger_type,
+										policy_configuration_action,
+										aggressive_cpu_power_correction,
+										policy_storage_option,
+										policy_exception_actions_send_alert,
+										policy_exception_actions_shutdown_system,
+										policy_power_domain,
+										platform_booting_mode,
+										cores_disabled,
+										correction_time_limit,
+										policy_trigger_limit,
+										statistics_reporting_period,
+										obj_cmd_rq) < 0)
+    {
+      API_ERRNO_TO_API_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+
+  if (target_channel_number == IPMI_CHANNEL_NUMBER_PRIMARY_IPMB
+      && target_slave_address == IPMI_SLAVE_ADDRESS_BMC
+      && target_lun == IPMI_BMC_IPMB_LUN_BMC)
+    {
+      if (api_ipmi_cmd (ctx,
+                        IPMI_BMC_IPMB_LUN_BMC,
+                        IPMI_NET_FN_OEM_GROUP_RQ,
+                        obj_cmd_rq,
+                        obj_cmd_rs) < 0)
+        {
+          ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+          goto cleanup;
+        }
+    }
+  else
+    {
+      if (api_ipmi_cmd_ipmb (ctx,
+                             target_channel_number,
+                             target_slave_address,
+                             target_lun,
+                             IPMI_NET_FN_OEM_GROUP_RQ,
+                             obj_cmd_rq,
+                             obj_cmd_rs) < 0)
+        {
+          ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+          goto cleanup;
+        }
+    }
+
+  rv = 0;
+ cleanup:
+  fiid_obj_destroy (obj_cmd_rq);
+  return (rv);
+}
+
 int
 ipmi_cmd_oem_intel_node_manager_get_node_manager_policy (ipmi_ctx_t ctx,
                                                          uint8_t target_channel_number,
@@ -307,16 +420,16 @@ ipmi_cmd_oem_intel_node_manager_get_node_manager_policy (ipmi_ctx_t ctx,
 }
 
 int
-ipmi_cmd_oem_intel_node_manager_set_node_manager_alert_thresholds (ipmi_ctx_t ctx,
-                                                                   uint8_t target_channel_number,
-                                                                   uint8_t target_slave_address,
-                                                                   uint8_t target_lun,
-                                                                   uint8_t domain_id,
-                                                                   uint8_t policy_id,
-                                                                   uint16_t *alert_threshold1,
-                                                                   uint16_t *alert_threshold2,
-                                                                   uint16_t *alert_threshold3,
-                                                                   fiid_obj_t obj_cmd_rs)
+ipmi_cmd_oem_intel_node_manager_set_node_manager_policy_alert_thresholds (ipmi_ctx_t ctx,
+									  uint8_t target_channel_number,
+									  uint8_t target_slave_address,
+									  uint8_t target_lun,
+									  uint8_t domain_id,
+									  uint8_t policy_id,
+									  uint16_t *alert_threshold1,
+									  uint16_t *alert_threshold2,
+									  uint16_t *alert_threshold3,
+									  fiid_obj_t obj_cmd_rs)
 {
   fiid_obj_t obj_cmd_rq = NULL;
   int rv = -1;
@@ -335,24 +448,24 @@ ipmi_cmd_oem_intel_node_manager_set_node_manager_alert_thresholds (ipmi_ctx_t ct
     }
 
   if (FIID_OBJ_TEMPLATE_COMPARE (obj_cmd_rs,
-                                 tmpl_cmd_oem_intel_node_manager_set_node_manager_alert_thresholds_rs) < 0)
+                                 tmpl_cmd_oem_intel_node_manager_set_node_manager_policy_alert_thresholds_rs) < 0)
     {
       API_FIID_OBJECT_ERROR_TO_API_ERRNUM (ctx, obj_cmd_rs);
       return (-1);
     }
 
-  if (!(obj_cmd_rq = fiid_obj_create (tmpl_cmd_oem_intel_node_manager_set_node_manager_alert_thresholds_rq)))
+  if (!(obj_cmd_rq = fiid_obj_create (tmpl_cmd_oem_intel_node_manager_set_node_manager_policy_alert_thresholds_rq)))
     {
       API_ERRNO_TO_API_ERRNUM (ctx, errno);
       goto cleanup;
     }
 
-  if (fill_cmd_oem_intel_node_manager_set_node_manager_alert_thresholds (domain_id,
-                                                                         policy_id,
-                                                                         alert_threshold1,
-                                                                         alert_threshold2,
-                                                                         alert_threshold3,
-                                                                         obj_cmd_rq) < 0)
+  if (fill_cmd_oem_intel_node_manager_set_node_manager_policy_alert_thresholds (domain_id,
+										policy_id,
+										alert_threshold1,
+										alert_threshold2,
+										alert_threshold3,
+										obj_cmd_rq) < 0)
     {
       API_ERRNO_TO_API_ERRNUM (ctx, errno);
       goto cleanup;
@@ -394,13 +507,13 @@ ipmi_cmd_oem_intel_node_manager_set_node_manager_alert_thresholds (ipmi_ctx_t ct
 }
 
 int
-ipmi_cmd_oem_intel_node_manager_get_node_manager_alert_thresholds (ipmi_ctx_t ctx,
-                                                                   uint8_t target_channel_number,
-                                                                   uint8_t target_slave_address,
-                                                                   uint8_t target_lun,
-                                                                   uint8_t domain_id,
-                                                                   uint8_t policy_id,
-                                                                   fiid_obj_t obj_cmd_rs)
+ipmi_cmd_oem_intel_node_manager_get_node_manager_policy_alert_thresholds (ipmi_ctx_t ctx,
+									  uint8_t target_channel_number,
+									  uint8_t target_slave_address,
+									  uint8_t target_lun,
+									  uint8_t domain_id,
+									  uint8_t policy_id,
+									  fiid_obj_t obj_cmd_rs)
 {
   fiid_obj_t obj_cmd_rq = NULL;
   int rv = -1;
@@ -419,21 +532,21 @@ ipmi_cmd_oem_intel_node_manager_get_node_manager_alert_thresholds (ipmi_ctx_t ct
     }
 
   if (FIID_OBJ_TEMPLATE_COMPARE (obj_cmd_rs,
-                                 tmpl_cmd_oem_intel_node_manager_get_node_manager_alert_thresholds_rs) < 0)
+                                 tmpl_cmd_oem_intel_node_manager_get_node_manager_policy_alert_thresholds_rs) < 0)
     {
       API_FIID_OBJECT_ERROR_TO_API_ERRNUM (ctx, obj_cmd_rs);
       return (-1);
     }
 
-  if (!(obj_cmd_rq = fiid_obj_create (tmpl_cmd_oem_intel_node_manager_get_node_manager_alert_thresholds_rq)))
+  if (!(obj_cmd_rq = fiid_obj_create (tmpl_cmd_oem_intel_node_manager_get_node_manager_policy_alert_thresholds_rq)))
     {
       API_ERRNO_TO_API_ERRNUM (ctx, errno);
       goto cleanup;
     }
 
-  if (fill_cmd_oem_intel_node_manager_get_node_manager_alert_thresholds (domain_id,
-                                                                         policy_id,
-                                                                         obj_cmd_rq) < 0)
+  if (fill_cmd_oem_intel_node_manager_get_node_manager_policy_alert_thresholds (domain_id,
+										policy_id,
+										obj_cmd_rq) < 0)
     {
       API_ERRNO_TO_API_ERRNUM (ctx, errno);
       goto cleanup;
@@ -900,6 +1013,7 @@ ipmi_cmd_oem_intel_node_manager_get_node_manager_capabilities (ipmi_ctx_t ctx,
                                                                uint8_t domain_id,
                                                                uint8_t policy_trigger_type,
                                                                uint8_t policy_type,
+							       uint8_t policy_power_domain,
                                                                fiid_obj_t obj_cmd_rs)
 {
   fiid_obj_t obj_cmd_rq = NULL;
@@ -934,6 +1048,7 @@ ipmi_cmd_oem_intel_node_manager_get_node_manager_capabilities (ipmi_ctx_t ctx,
   if (fill_cmd_oem_intel_node_manager_get_node_manager_capabilities (domain_id,
                                                                      policy_trigger_type,
                                                                      policy_type,
+								     policy_power_domain,
                                                                      obj_cmd_rq) < 0)
     {
       API_ERRNO_TO_API_ERRNUM (ctx, errno);
@@ -1141,7 +1256,7 @@ ipmi_cmd_oem_intel_node_manager_set_node_manager_alert_destination (ipmi_ctx_t c
                                                                     uint8_t target_slave_address,
                                                                     uint8_t target_lun,
                                                                     uint8_t channel_number,
-                                                                    uint8_t destination_information_operation,
+                                                                    uint8_t alert_receiver_deactivation,
                                                                     uint8_t destination_information,
                                                                     uint8_t alert_string_selector,
                                                                     uint8_t send_alert_string,
@@ -1177,7 +1292,7 @@ ipmi_cmd_oem_intel_node_manager_set_node_manager_alert_destination (ipmi_ctx_t c
     }
 
   if (fill_cmd_oem_intel_node_manager_set_node_manager_alert_destination (channel_number,
-                                                                          destination_information_operation,
+                                                                          alert_receiver_deactivation,
                                                                           destination_information,
                                                                           alert_string_selector,
                                                                           send_alert_string,
@@ -1228,7 +1343,7 @@ ipmi_cmd_oem_intel_node_manager_set_node_manager_alert_destination_ipmb (ipmi_ct
                                                                          uint8_t target_slave_address,
                                                                          uint8_t target_lun,
                                                                          uint8_t channel_number,
-                                                                         uint8_t destination_information_operation,
+                                                                         uint8_t alert_receiver_deactivation,
                                                                          uint8_t slave_address,
                                                                          uint8_t alert_string_selector,
                                                                          uint8_t send_alert_string,
@@ -1264,7 +1379,7 @@ ipmi_cmd_oem_intel_node_manager_set_node_manager_alert_destination_ipmb (ipmi_ct
     }
 
   if (fill_cmd_oem_intel_node_manager_set_node_manager_alert_destination_ipmb (channel_number,
-                                                                               destination_information_operation,
+                                                                               alert_receiver_deactivation,
                                                                                slave_address,
                                                                                alert_string_selector,
                                                                                send_alert_string,
@@ -1315,7 +1430,7 @@ ipmi_cmd_oem_intel_node_manager_set_node_manager_alert_destination_lan (ipmi_ctx
                                                                         uint8_t target_slave_address,
                                                                         uint8_t target_lun,
                                                                         uint8_t channel_number,
-                                                                        uint8_t destination_information_operation,
+                                                                        uint8_t alert_receiver_deactivation,
                                                                         uint8_t destination_selector,
                                                                         uint8_t alert_string_selector,
                                                                         uint8_t send_alert_string,
@@ -1351,7 +1466,7 @@ ipmi_cmd_oem_intel_node_manager_set_node_manager_alert_destination_lan (ipmi_ctx
     }
 
   if (fill_cmd_oem_intel_node_manager_set_node_manager_alert_destination_lan (channel_number,
-                                                                              destination_information_operation,
+                                                                              alert_receiver_deactivation,
                                                                               destination_selector,
                                                                               alert_string_selector,
                                                                               send_alert_string,
@@ -1433,6 +1548,249 @@ ipmi_cmd_oem_intel_node_manager_get_node_manager_alert_destination (ipmi_ctx_t c
     }
 
   if (fill_cmd_oem_intel_node_manager_get_node_manager_alert_destination (obj_cmd_rq) < 0)
+    {
+      API_ERRNO_TO_API_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+
+  if (target_channel_number == IPMI_CHANNEL_NUMBER_PRIMARY_IPMB
+      && target_slave_address == IPMI_SLAVE_ADDRESS_BMC
+      && target_lun == IPMI_BMC_IPMB_LUN_BMC)
+    {
+      if (api_ipmi_cmd (ctx,
+                        IPMI_BMC_IPMB_LUN_BMC,
+                        IPMI_NET_FN_OEM_GROUP_RQ,
+                        obj_cmd_rq,
+                        obj_cmd_rs) < 0)
+        {
+          ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+          goto cleanup;
+        }
+    }
+  else
+    {
+      if (api_ipmi_cmd_ipmb (ctx,
+                             target_channel_number,
+                             target_slave_address,
+                             target_lun,
+                             IPMI_NET_FN_OEM_GROUP_RQ,
+                             obj_cmd_rq,
+                             obj_cmd_rs) < 0)
+        {
+          ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+          goto cleanup;
+        }
+    }
+
+  rv = 0;
+ cleanup:
+  fiid_obj_destroy (obj_cmd_rq);
+  return (rv);
+}
+
+int
+ipmi_cmd_oem_intel_node_manager_set_turbo_synchronization_ratio (ipmi_ctx_t ctx,
+								 uint8_t target_channel_number,
+								 uint8_t target_slave_address,
+								 uint8_t target_lun,
+								 uint8_t cpu_socket_number,
+								 uint8_t active_cores_configuration,
+								 uint8_t turbo_ratio_limit,
+								 fiid_obj_t obj_cmd_rs)
+{
+  fiid_obj_t obj_cmd_rq = NULL;
+  int rv = -1;
+
+  if (!ctx || ctx->magic != IPMI_CTX_MAGIC)
+    {
+      ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+      return (-1);
+    }
+
+  /* remaining parameter checks in fill function */
+  if (!fiid_obj_valid (obj_cmd_rs))
+    {
+      API_SET_ERRNUM (ctx, IPMI_ERR_PARAMETERS);
+      return (-1);
+    }
+
+  if (FIID_OBJ_TEMPLATE_COMPARE (obj_cmd_rs,
+                                 tmpl_cmd_oem_intel_node_manager_set_turbo_synchronization_ratio_rs) < 0)
+    {
+      API_FIID_OBJECT_ERROR_TO_API_ERRNUM (ctx, obj_cmd_rs);
+      return (-1);
+    }
+
+  if (!(obj_cmd_rq = fiid_obj_create (tmpl_cmd_oem_intel_node_manager_set_turbo_synchronization_ratio_rq)))
+    {
+      API_ERRNO_TO_API_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+
+  if (fill_cmd_oem_intel_node_manager_set_turbo_synchronization_ratio (cpu_socket_number,
+								       active_cores_configuration,
+								       turbo_ratio_limit,
+								       obj_cmd_rq) < 0)
+    {
+      API_ERRNO_TO_API_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+
+  if (target_channel_number == IPMI_CHANNEL_NUMBER_PRIMARY_IPMB
+      && target_slave_address == IPMI_SLAVE_ADDRESS_BMC
+      && target_lun == IPMI_BMC_IPMB_LUN_BMC)
+    {
+      if (api_ipmi_cmd (ctx,
+                        IPMI_BMC_IPMB_LUN_BMC,
+                        IPMI_NET_FN_OEM_GROUP_RQ,
+                        obj_cmd_rq,
+                        obj_cmd_rs) < 0)
+        {
+          ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+          goto cleanup;
+        }
+    }
+  else
+    {
+      if (api_ipmi_cmd_ipmb (ctx,
+                             target_channel_number,
+                             target_slave_address,
+                             target_lun,
+                             IPMI_NET_FN_OEM_GROUP_RQ,
+                             obj_cmd_rq,
+                             obj_cmd_rs) < 0)
+        {
+          ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+          goto cleanup;
+        }
+    }
+
+  rv = 0;
+ cleanup:
+  fiid_obj_destroy (obj_cmd_rq);
+  return (rv);
+}
+
+int
+ipmi_cmd_oem_intel_node_manager_get_turbo_synchronization_ratio (ipmi_ctx_t ctx,
+								 uint8_t target_channel_number,
+								 uint8_t target_slave_address,
+								 uint8_t target_lun,
+								 uint8_t cpu_socket_number,
+								 uint8_t active_cores_configuration,
+								 fiid_obj_t obj_cmd_rs)
+{
+  fiid_obj_t obj_cmd_rq = NULL;
+  int rv = -1;
+
+  if (!ctx || ctx->magic != IPMI_CTX_MAGIC)
+    {
+      ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+      return (-1);
+    }
+
+  /* remaining parameter checks in fill function */
+  if (!fiid_obj_valid (obj_cmd_rs))
+    {
+      API_SET_ERRNUM (ctx, IPMI_ERR_PARAMETERS);
+      return (-1);
+    }
+
+  if (FIID_OBJ_TEMPLATE_COMPARE (obj_cmd_rs,
+                                 tmpl_cmd_oem_intel_node_manager_get_turbo_synchronization_ratio_rs) < 0)
+    {
+      API_FIID_OBJECT_ERROR_TO_API_ERRNUM (ctx, obj_cmd_rs);
+      return (-1);
+    }
+
+  if (!(obj_cmd_rq = fiid_obj_create (tmpl_cmd_oem_intel_node_manager_get_turbo_synchronization_ratio_rq)))
+    {
+      API_ERRNO_TO_API_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+
+  if (fill_cmd_oem_intel_node_manager_get_turbo_synchronization_ratio (cpu_socket_number,
+								       active_cores_configuration,
+								       obj_cmd_rq) < 0)
+    {
+      API_ERRNO_TO_API_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+
+  if (target_channel_number == IPMI_CHANNEL_NUMBER_PRIMARY_IPMB
+      && target_slave_address == IPMI_SLAVE_ADDRESS_BMC
+      && target_lun == IPMI_BMC_IPMB_LUN_BMC)
+    {
+      if (api_ipmi_cmd (ctx,
+                        IPMI_BMC_IPMB_LUN_BMC,
+                        IPMI_NET_FN_OEM_GROUP_RQ,
+                        obj_cmd_rq,
+                        obj_cmd_rs) < 0)
+        {
+          ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+          goto cleanup;
+        }
+    }
+  else
+    {
+      if (api_ipmi_cmd_ipmb (ctx,
+                             target_channel_number,
+                             target_slave_address,
+                             target_lun,
+                             IPMI_NET_FN_OEM_GROUP_RQ,
+                             obj_cmd_rq,
+                             obj_cmd_rs) < 0)
+        {
+          ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+          goto cleanup;
+        }
+    }
+
+  rv = 0;
+ cleanup:
+  fiid_obj_destroy (obj_cmd_rq);
+  return (rv);
+}
+
+int
+ipmi_cmd_oem_intel_node_manager_get_limiting_policy_id (ipmi_ctx_t ctx,
+							uint8_t target_channel_number,
+							uint8_t target_slave_address,
+							uint8_t target_lun,
+							uint8_t domain_id,
+							fiid_obj_t obj_cmd_rs)
+{
+  fiid_obj_t obj_cmd_rq = NULL;
+  int rv = -1;
+
+  if (!ctx || ctx->magic != IPMI_CTX_MAGIC)
+    {
+      ERR_TRACE (ipmi_ctx_errormsg (ctx), ipmi_ctx_errnum (ctx));
+      return (-1);
+    }
+
+  /* remaining parameter checks in fill function */
+  if (!fiid_obj_valid (obj_cmd_rs))
+    {
+      API_SET_ERRNUM (ctx, IPMI_ERR_PARAMETERS);
+      return (-1);
+    }
+
+  if (FIID_OBJ_TEMPLATE_COMPARE (obj_cmd_rs,
+                                 tmpl_cmd_oem_intel_node_manager_get_limiting_policy_id_rs) < 0)
+    {
+      API_FIID_OBJECT_ERROR_TO_API_ERRNUM (ctx, obj_cmd_rs);
+      return (-1);
+    }
+
+  if (!(obj_cmd_rq = fiid_obj_create (tmpl_cmd_oem_intel_node_manager_get_limiting_policy_id_rq)))
+    {
+      API_ERRNO_TO_API_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+
+  if (fill_cmd_oem_intel_node_manager_get_limiting_policy_id (domain_id,
+							      obj_cmd_rq) < 0)
     {
       API_ERRNO_TO_API_ERRNUM (ctx, errno);
       goto cleanup;

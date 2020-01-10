@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,8 +55,8 @@
 #define MAX_SENSOR_TYPES                    256
 #else  /* !0 */
 /* achu: pick more reasonable limits than the theoretical maxes */
-#define MAX_SENSOR_RECORD_IDS               512
-#define MAX_SENSOR_TYPES                    64
+#define MAX_SENSOR_RECORD_IDS               4096
+#define MAX_SENSOR_TYPES                    128
 #endif	/* !0 */
 #endif /* !__CYGWIN__ */
 #define MAX_SENSOR_TYPES_STRING_LENGTH      256

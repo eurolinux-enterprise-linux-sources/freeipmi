@@ -43,6 +43,7 @@ nobase_include_HEADERS = \
 	freeipmi/cmds/ipmi-sol-cmds.h \
 	freeipmi/cmds/rmcp-cmds.h \
 	freeipmi/debug/ipmi-debug.h \
+	freeipmi/driver/ipmi-inteldcmi-driver.h \
 	freeipmi/driver/ipmi-kcs-driver.h \
 	freeipmi/driver/ipmi-openipmi-driver.h \
 	freeipmi/driver/ipmi-sunbmc-driver.h \
@@ -59,21 +60,28 @@ nobase_include_HEADERS = \
 	freeipmi/locate/ipmi-locate.h \
 	freeipmi/payload/ipmi-sol-payload.h \
 	freeipmi/record-format/ipmi-cipher-suite-record-format.h \
+	freeipmi/record-format/ipmi-fru-dimmspd-record-format.h \
 	freeipmi/record-format/ipmi-fru-information-record-format.h \
 	freeipmi/record-format/ipmi-fru-oem-record-format.h \
 	freeipmi/record-format/ipmi-platform-event-trap-record-format.h \
 	freeipmi/record-format/ipmi-sdr-record-format.h \
 	freeipmi/record-format/ipmi-sdr-oem-record-format.h \
 	freeipmi/record-format/ipmi-sel-record-format.h \
+	freeipmi/record-format/ipmi-sel-oem-record-format.h \
+	freeipmi/record-format/oem/ipmi-fru-wistron-oem-record-format.h \
+	freeipmi/record-format/oem/ipmi-sdr-oem-intel-node-manager-record-format.h \
+	freeipmi/record-format/oem/ipmi-sdr-oem-intel-record-format.h \
+	freeipmi/record-format/oem/ipmi-sel-oem-intel-record-format.h \
+	freeipmi/record-format/oem/ipmi-sel-oem-linux-kernel-record-format.h \
 	freeipmi/sdr/ipmi-sdr.h \
 	freeipmi/sdr/ipmi-sdr-oem.h \
+	freeipmi/sdr/oem/ipmi-sdr-oem-intel-node-manager.h \
 	freeipmi/sel/ipmi-sel.h \
 	freeipmi/sensor-read/ipmi-sensor-read.h \
 	freeipmi/spec/ipmi-authentication-type-spec.h \
 	freeipmi/spec/ipmi-channel-spec.h \
 	freeipmi/spec/ipmi-cmd-spec.h \
 	freeipmi/spec/ipmi-cmd-dcmi-spec.h \
-	freeipmi/spec/ipmi-cmd-oem-spec.h \
 	freeipmi/spec/ipmi-comp-code-spec.h \
 	freeipmi/spec/ipmi-comp-code-dcmi-spec.h \
 	freeipmi/spec/ipmi-comp-code-oem-spec.h \
@@ -86,6 +94,7 @@ nobase_include_HEADERS = \
 	freeipmi/spec/ipmi-fru-language-codes-spec.h \
 	freeipmi/spec/ipmi-iana-enterprise-numbers-spec.h \
 	freeipmi/spec/ipmi-ipmb-lun-spec.h \
+	freeipmi/spec/ipmi-jedec-manufacturer-identification-code-spec.h \
 	freeipmi/spec/ipmi-lan-configuration-parameters-spec.h \
 	freeipmi/spec/ipmi-lan-configuration-parameters-oem-spec.h \
 	freeipmi/spec/ipmi-netfn-spec.h \
@@ -113,12 +122,89 @@ nobase_include_HEADERS = \
 	freeipmi/spec/ipmi-system-info-parameters-spec.h \
 	freeipmi/spec/ipmi-system-info-parameters-oem-spec.h \
 	freeipmi/spec/ipmi-system-software-id-spec.h \
+	freeipmi/spec/ipmi-timestamp-spec.h \
+	freeipmi/spec/oem/ipmi-cmd-oem-dell-spec.h \
+	freeipmi/spec/oem/ipmi-cmd-oem-fujitsu-spec.h \
+	freeipmi/spec/oem/ipmi-cmd-oem-gigabyte-spec.h \
+	freeipmi/spec/oem/ipmi-cmd-oem-ibm-spec.h \
+	freeipmi/spec/oem/ipmi-cmd-oem-intel-node-manager-spec.h \
+	freeipmi/spec/oem/ipmi-cmd-oem-intel-spec.h \
+	freeipmi/spec/oem/ipmi-cmd-oem-inventec-spec.h \
+	freeipmi/spec/oem/ipmi-cmd-oem-quanta-spec.h \
+	freeipmi/spec/oem/ipmi-cmd-oem-sun-microsystems-spec.h \
+	freeipmi/spec/oem/ipmi-cmd-oem-supermicro-spec.h \
+	freeipmi/spec/oem/ipmi-cmd-oem-wistron-spec.h \
+	freeipmi/spec/oem/ipmi-comp-code-oem-dell-spec.h \
+	freeipmi/spec/oem/ipmi-comp-code-oem-fujitsu-spec.h \
+	freeipmi/spec/oem/ipmi-comp-code-oem-intel-node-manager-spec.h \
+	freeipmi/spec/oem/ipmi-comp-code-oem-intel-spec.h \
+	freeipmi/spec/oem/ipmi-comp-code-oem-wistron-spec.h \
+	freeipmi/spec/oem/ipmi-event-reading-type-code-oem-dell-spec.h \
+	freeipmi/spec/oem/ipmi-event-reading-type-code-oem-hp-spec.h \
+	freeipmi/spec/oem/ipmi-event-reading-type-code-oem-intel-node-manager-spec.h \
+	freeipmi/spec/oem/ipmi-event-reading-type-code-oem-intel-spec.h \
+	freeipmi/spec/oem/ipmi-event-reading-type-code-oem-inventec-spec.h \
+	freeipmi/spec/oem/ipmi-event-reading-type-code-oem-supermicro-spec.h \
+	freeipmi/spec/oem/ipmi-lan-configuration-parameters-oem-inventec-spec.h \
+	freeipmi/spec/oem/ipmi-lan-configuration-parameters-oem-wistron-spec.h \
+	freeipmi/spec/oem/ipmi-netfn-oem-dell-spec.h \
+	freeipmi/spec/oem/ipmi-netfn-oem-fujitsu-spec.h \
+	freeipmi/spec/oem/ipmi-netfn-oem-ibm-spec.h \
+	freeipmi/spec/oem/ipmi-netfn-oem-intel-spec.h \
+	freeipmi/spec/oem/ipmi-netfn-oem-inventec-spec.h \
+	freeipmi/spec/oem/ipmi-netfn-oem-quanta-spec.h \
+	freeipmi/spec/oem/ipmi-netfn-oem-supermicro-spec.h \
+	freeipmi/spec/oem/ipmi-netfn-oem-wistron-spec.h \
+	freeipmi/spec/oem/ipmi-oem-dell-spec.h \
+	freeipmi/spec/oem/ipmi-oem-fujitsu-spec.h \
+	freeipmi/spec/oem/ipmi-oem-gigabyte-spec.h \
+	freeipmi/spec/oem/ipmi-oem-ibm-spec.h \
+	freeipmi/spec/oem/ipmi-oem-intel-spec.h \
+	freeipmi/spec/oem/ipmi-oem-inventec-spec.h \
+	freeipmi/spec/oem/ipmi-oem-quanta-spec.h \
+	freeipmi/spec/oem/ipmi-oem-sun-microsystems-spec.h \
+	freeipmi/spec/oem/ipmi-oem-supermicro-spec.h \
+	freeipmi/spec/oem/ipmi-oem-wistron-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-dell-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-fujitsu-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-gigabyte-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-hp-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-intel-node-manager-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-intel-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-inventec-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-quanta-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-supermicro-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-and-event-code-tables-oem-wistron-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-numbers-oem-dell-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-numbers-oem-intel-node-manager-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-numbers-oem-intel-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-numbers-oem-inventec-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-numbers-oem-quanta-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-numbers-oem-wistron-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-types-oem-dell-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-types-oem-fujitsu-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-types-oem-hp-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-types-oem-intel-node-manager-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-types-oem-inventec-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-types-oem-intel-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-types-oem-supermicro-spec.h \
+	freeipmi/spec/oem/ipmi-sensor-types-oem-wistron-spec.h \
+	freeipmi/spec/oem/ipmi-slave-address-oem-intel-spec.h \
+	freeipmi/spec/oem/ipmi-slave-address-oem-inventec-spec.h \
+	freeipmi/spec/oem/ipmi-slave-address-oem-linux-kernel-spec.h \
+	freeipmi/spec/oem/ipmi-slave-address-oem-quanta-spec.h \
+	freeipmi/spec/oem/ipmi-slave-address-oem-wistron-spec.h \
+	freeipmi/spec/oem/ipmi-sol-configuration-parameters-oem-inventec-spec.h \
+	freeipmi/spec/oem/ipmi-sol-configuration-parameters-oem-wistron-spec.h \
+	freeipmi/spec/oem/ipmi-system-info-parameters-oem-dell-spec.h \
+	freeipmi/spec/oem/ipmi-system-info-parameters-oem-wistron-spec.h \
 	freeipmi/templates/ipmi-bmc-watchdog-timer-cmds-templates.h \
 	freeipmi/templates/ipmi-chassis-cmds-templates.h \
 	freeipmi/templates/ipmi-dcmi-cmds-templates.h \
 	freeipmi/templates/ipmi-device-global-cmds-templates.h \
 	freeipmi/templates/ipmi-event-cmds-templates.h \
 	freeipmi/templates/ipmi-firmware-firewall-command-discovery-cmds-templates.h \
+	freeipmi/templates/ipmi-fru-dimmspd-record-format-templates.h \
 	freeipmi/templates/ipmi-fru-inventory-device-cmds-templates.h \
 	freeipmi/templates/ipmi-lan-cmds-templates.h \
 	freeipmi/templates/ipmi-messaging-support-cmds-templates.h \
@@ -140,8 +226,8 @@ nobase_include_HEADERS = \
 	freeipmi/templates/ipmi-cipher-suite-record-format-templates.h \
 	freeipmi/templates/ipmi-fru-information-record-format-templates.h \
 	freeipmi/templates/ipmi-sdr-record-format-templates.h \
-	freeipmi/templates/ipmi-sdr-oem-record-format-templates.h \
 	freeipmi/templates/ipmi-sel-record-format-templates.h \
+	freeipmi/templates/oem/ipmi-sdr-oem-intel-node-manager-record-format-templates.h \
 	freeipmi/util/ipmi-channel-util.h \
 	freeipmi/util/ipmi-cipher-suite-util.h \
 	freeipmi/util/ipmi-device-types-util.h \
@@ -150,11 +236,13 @@ nobase_include_HEADERS = \
 	freeipmi/util/ipmi-error-dcmi-util.h \
 	freeipmi/util/ipmi-iana-enterprise-numbers-util.h \
 	freeipmi/util/ipmi-ipmb-util.h \
+	freeipmi/util/ipmi-jedec-manufacturer-identification-code-util.h \
 	freeipmi/util/ipmi-lan-util.h \
 	freeipmi/util/ipmi-outofband-util.h \
 	freeipmi/util/ipmi-rmcpplus-util.h \
 	freeipmi/util/ipmi-sensor-and-event-code-tables-util.h \
 	freeipmi/util/ipmi-sensor-util.h \
+	freeipmi/util/ipmi-timestamp-util.h \
 	freeipmi/util/ipmi-util.h \
 	freeipmi/util/ipmi-dcmi-util.h \
 	freeipmi/util/rmcp-util.h

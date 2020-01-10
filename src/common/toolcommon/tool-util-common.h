@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 #include <stdint.h>
 #include <freeipmi/freeipmi.h>
 
+#include "tool-cmdline-common.h"
+
 int ipmi_is_root ();
 
 void ipmi_disable_coredump (void);
@@ -31,5 +33,8 @@ int check_kg_len (const char *in);
 
 /* Turn a 20-byte binary k_g key into an output string */
 char *format_kg (char *out, unsigned int outlen, const void *k_g);
+
+unsigned int get_timestamp_flags (struct common_cmd_args *common_args,
+				  unsigned int defaultflags); 
 
 #endif /* TOOL_UTIL_COMMON_H */

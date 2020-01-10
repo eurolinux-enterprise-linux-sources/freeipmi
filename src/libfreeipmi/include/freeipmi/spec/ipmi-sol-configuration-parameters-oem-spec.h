@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,26 +23,8 @@
 extern "C" {
 #endif
 
-/******************************************* 
- * Inventec                                *
- *******************************************/
-
-/*
- * Inventec 5441/Dell Xanadu II
- * Inventec 5442/Dell Xanadu III
- */
-
-#define IPMI_SOL_CONFIGURATION_PARAMETER_OEM_INVENTEC_SOL_TIMEOUT 192
-
-/******************************************* 
- * Wistron                                 *
- *******************************************/
-
-/*
- * Wistron / Dell Poweredge C6220
- */
-
-#define IPMI_SOL_CONFIGURATION_PARAMETER_OEM_WISTRON_SOL_TIMEOUT  192
+#include <freeipmi/spec/oem/ipmi-sol-configuration-parameters-oem-inventec-spec.h>
+#include <freeipmi/spec/oem/ipmi-sol-configuration-parameters-oem-wistron-spec.h>
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -211,7 +211,10 @@ _is_ipmi_entry (ipmi_locate_ctx_t ctx,
   static const char smbios_entry_sig[4] = { '_', 'S', 'M', '_' };
   static const char smbios_entry_anchor[5] = { '_', 'D', 'M', 'I', '_' };
   uint32_t csum_computed;
+#if 0
+  /* remove compiler warning, unsure how used */
   uint8_t csum_given;
+#endif
   uint8_t entry_len;
   uint8_t* bp;
 
@@ -224,7 +227,10 @@ _is_ipmi_entry (ipmi_locate_ctx_t ctx,
 
   entry_len = sigp[IPMI_SMBIOS_ENTRY_LEN_OFFSET];
 
+#if 0
+  /* remove compiler warning, unsure how used */
   csum_given = sigp[IPMI_SMBIOS_ENTRY_CSUM_OFFSET];
+#endif
   csum_computed = 0;
   for (bp = sigp; bp < sigp + entry_len; bp++)
     csum_computed = (csum_computed + (*bp)) % (1 << CHAR_BIT);
@@ -233,7 +239,10 @@ _is_ipmi_entry (ipmi_locate_ctx_t ctx,
               sizeof (smbios_entry_anchor)) != 0)
     return (0);
 
+#if 0
+  /* remove compiler warning, unsure how used */
   csum_given = sigp[IPMI_SMBIOS_ENTRY_ANCHOR_CSUM_OFFSET];
+#endif
   csum_computed = 0;
   for (bp = sigp + IPMI_SMBIOS_ENTRY_ANCHOR_CSUM_OFFSET; bp < sigp + entry_len; bp++)
     csum_computed = (csum_computed + (*bp)) % (1 << CHAR_BIT);
@@ -434,6 +443,9 @@ ipmi_locate_smbios_get_device_info (ipmi_locate_ctx_t ctx,
   uint64_t strobed;
   struct ipmi_locate_info linfo;
 
+#if defined(__arm__) || defined(__aarch64__)
+  return (-1);
+#else
   if (!ctx || ctx->magic != IPMI_LOCATE_CTX_MAGIC)
     {
       ERR_TRACE (ipmi_locate_ctx_errormsg (ctx), ipmi_locate_ctx_errnum (ctx));
@@ -513,4 +525,5 @@ ipmi_locate_smbios_get_device_info (ipmi_locate_ctx_t ctx,
  cleanup:
   free (bufp);
   return (-1);
+#endif
 }

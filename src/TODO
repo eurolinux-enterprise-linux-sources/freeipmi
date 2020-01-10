@@ -4,7 +4,6 @@ ooo - priority code cleanup that should be done
 
 branches to merge
 -----------------
-dellr720
 
 to test
 -------
@@ -23,13 +22,14 @@ FreeIPMI general
 - consider moving #defines to #enums globally for easier debugging w/
   gdb
 - event handling api/mechanism
-- loop/try again on NODE_BUSY errors (XXX)
+- loop/try again on NODE_BUSY errors (***)
   - treat more like network busy than error?
   - option for alternate behavior?
-- update text documents to texinfo (***)
+- update text documents to texinfo (ooo)
 - OEM extensions generalized
   - generalize "+" syntax in ipmipower to all FreeIPMI tools?
   - or use extra option?
+- audit/cleanup memsets, use sizeof() when appropriate
 
 FreeIPMI new stuff
 ------------------
@@ -45,7 +45,6 @@ FreeIPMI new stuff
   - different SEL entries
   - all permutations of sensors, etc.
 - config tools for (***)
-  - dcmi (***)
   - intel node manager (***)
     - maybe not?  Intel NM does not configure via a standard
       checkout/commit fashion.  Policies are created, then removed.
@@ -65,6 +64,13 @@ FreeIPMI new stuff
   - capture lan and do inband, maybe useful if you have dedicated port
   that can't be seen by the network, and you don't have enough switch
   ports to have both plugged up to the network.
+- OCP IPMI extensions
+  - FRU record
+  - command extensions
+
+FreeIPMI maybe stuff
+--------------------
+redo ipmipower/ipmiconole using phi accrual failure detector algorithm?
 
 library general
 ---------------
@@ -142,11 +148,12 @@ libfreeipmi-interpret
 
 libfreeipmi-sdr
 ---------------
-- checksum/something to ensure no disk corruption
+
+libfreeipmi-fru
+---------------
 
 libfreeipmi-sel
 ---------------
-- split vendor files into motherboard files?  Is getting big.
 - cleanup parsing functions
 
 libipmiconsole
@@ -171,8 +178,6 @@ libipmimonitoring
   - but some mobos have sensor name == each other, so what is the purpose?
   - would need to also add sensor number with it??
   - also to deal w/ probability SDR's change on some mobos
-- support 'discretereading' workaround (XXX)
-  - need a mobo to play with to test, lots of a breakage possibilities
 - how specify record ids w/ sharing
 - entity sensor names
 
@@ -205,7 +210,7 @@ ipmi-sensors
   - some mobos seem to set flags incorrectly
 - column for sensor number?
   - useful for shared sensor output?
-- how to select specific shared sensor on commad line, can't do normally (XXX)
+- how to select specific shared sensor on commad line, can't do normally (***)
   - i.e. perhaps need to do record-id and something else, like
     -r 5.2 to indicate record id 5 and offset 2.
   - issue for libipmimonitoring too?
@@ -229,7 +234,7 @@ ipmi-sel
 - non-uncommon for motherboards to output events both directions of
   crossing threshold.  Can be confusing b/c assert/deassert not output
   by default.  Should alter output in these cases?
-- --delete-date-range (XXX)
+- --delete-date-range (***)
 - ganglia plugin?
 - nagios plugin?
 
@@ -254,7 +259,7 @@ bmc-device
   - really should be done by firmware or distro
   - or only as needed in ipmi-oem per vendor need?
 - (NOT CONFIRMED) get auxiliary log status
-- set sensor reading (XXX)
+- set sensor reading (***)
 
 bmc-watchdog
 ------------
@@ -268,44 +273,29 @@ ipmiconsole
 - support other escape codes like w/ &D
 - support F1-F12 suggested by user
 
-config tools
+ipmi-config
 ------------
-- collapse into one allmighty tool (***)
-  - user must pick section
-  - bmc, pef, sensor, chassis, all
-  - makes more extensible in the future
-    - oem, dcmi, intel node manager, system info, firmware firewall, etc.
-  - --category option (bmc, sensors, chassis, pef, oem, dcmi, intel)
-  - make tools prefix sections w/ appropriate prefixes to allow
-    for checking of what sections should be used
-    - i.e. BMC, CHASSIS, PEF, etc.
-    - probably not, too much backwords compatability crap to handle.
-      Also would make code ugly as hell to make all duplicate sections.
-      should do database of what sections go to what categories
-
-bmc-config
-----------
-- support ipv4 mapped ipv6 addresses?
+- make tools prefix sections w/ appropriate prefixes to allow
+  for checking of what sections should be used??
+  - i.e. BMC, CHASSIS, PEF, etc.
+  - probably not, too much backwords compatability crap to handle.
+    Also would make code ugly as hell to make all duplicate sections.
+    should do database of what sections go to what categories
+- core: support ipv4 mapped ipv6 addresses?
   - until in spec, no point, maybe deal in ipmi-oem?
-
-ipmi-chassis-config
--------------------
-* conf.5 manpage
-(NEVER TESTED) panel button config - need hardware w/ this
-(NEVER TESTED) device instance selector
-
-ipmi-pef-config
------------
-* conf.5 manpage
-
-ipmi-sensors-config
--------------------
-* conf.5 manpage
-* instructions for each section??
+- chassis, pef & sensors: conf.5 manpage
+- chassis: (NEVER TESTED) panel button config - need hardware w/ this
+- chassis: (NEVER TESTED) device instance selector
+- sensors: instructions for each section??
+- sensors: when value cannot be encodd accurately, report numbers that can work
 
 ipmi-oem
 --------
 dell poweredge lcd support?
+
+ipmiseld
+--------
+send e-mail on alert noticed/received?
 
 contributions
 -------------

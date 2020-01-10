@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmimonitoring-sensors.c,v 1.6 2010-07-22 21:49:00 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -57,6 +57,9 @@
 char *hostname = NULL; 
 
 /* In-band Communication Configuration */
+/* On linux, you may wish to change driver_type to
+ * IPMI_MONITORING_DRIVER_TYPE_OPENIPMI if you use /dev/ipmi0
+ */
 int driver_type = IPMI_MONITORING_DRIVER_TYPE_KCS; /* or -1 for default */
 int disable_auto_probe = 0;     /* probe for in-band device */
 unsigned int driver_address = 0; /* not used if probing */

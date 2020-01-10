@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmi-fru_.h,v 1.17 2010-02-08 22:20:58 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -52,6 +52,7 @@ enum ipmi_fru_argp_option_keys
     SKIP_CHECKS_KEY = 's',
     BRIDGE_FRU_KEY = 160,
     INTERPRET_OEM_DATA = 161,
+    FRU_FILE_KEY = 162,
   };
 
 struct ipmi_fru_arguments
@@ -64,6 +65,7 @@ struct ipmi_fru_arguments
   int skip_checks;
   int bridge_fru;
   int interpret_oem_data;
+  char *fru_file;
 };
 
 typedef struct ipmi_fru_prog_data

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * 
  */
 /*****************************************************************************\
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -171,7 +171,9 @@ extern "C" {
 #define IPMI_FRU_LANGUAGE_CODE_SWEDISH              112
 #define IPMI_FRU_LANGUAGE_CODE_SWAHILI              113
 #define IPMI_FRU_LANGUAGE_CODE_TAMIL                114
-#define IPMI_FRU_LANGUAGE_CODE_TEGULU               115
+#define IPMI_FRU_LANGUAGE_CODE_TELUGU               115
+/* Spec has "Tegulu", likely a typo */
+#define IPMI_FRU_LANGUAGE_CODE_TEGULU               IPMI_FRU_LANGUAGE_CODE_TELUGU
 #define IPMI_FRU_LANGUAGE_CODE_TAJIK                116
 #define IPMI_FRU_LANGUAGE_CODE_THAI                 117
 #define IPMI_FRU_LANGUAGE_CODE_TIGRINYA             118

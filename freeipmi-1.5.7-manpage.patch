@@ -1,0 +1,191 @@
+diff -urNp old/man/freeipmi.7.pre.in new/man/freeipmi.7.pre.in
+--- old/man/freeipmi.7.pre.in	2017-08-29 14:01:35.453296600 +0200
++++ new/man/freeipmi.7.pre.in	2017-11-20 08:37:57.192003912 +0100
+@@ -87,20 +87,20 @@ found in each of the tool manpages.
+ The primary tools that most users of FreeIPMI will be interested in
+ for system management are the following:
+ .PP
+-.B Ipmi-sensors
++.B ipmi-sensors
+ .PP
+ A tool to read IPMI sensor readings to aid in system monitoring.
+ .PP
+-.B Ipmi-sel
++.B ipmi-sel
+ .PP
+ A tool to read and manage IPMI System Event Log (SEL) records to aid
+ in system debugging.
+ .PP
+-.B Ipmipower
++.B ipmipower
+ .PP
+ A tool for remote power control.
+ .PP
+-.B Ipmiconsole
++.B ipmiconsole
+ .PP
+ A tool for Serial-over-Lan (SOL) console access.
+ .PP
+@@ -121,7 +121,7 @@ for more information.
+ 
+ .SH "HPC Support"
+ Much of FreeIPMI was written with HPC support in mind.  
+-.B Ipmi-config(8)
++.B ipmi-config(8)
+ comes with file input/output support so that configuration can be
+ copied and verified across nodes in a cluster.  Most tools (like
+ .B ipmipower(8) 
+@@ -133,7 +133,7 @@ the hosts in parallel.  See tool manpage
+ Also see the document 
+ \fIfreeipmi-hostrange.txt\fR 
+ for detailed usage and explanation.
+-.B Ipmi-sensors(8)
++.B ipmi-sensors(8)
+ and the
+ .B libipmimonitoring(3)
+ library support the ability to interpret sensor readings as well as
+@@ -155,47 +155,47 @@ Or see the document
+ .SH "Project Tools"
+ The following tools are distributed and supported by FreeIPMI.
+ .PP
+-.B Bmc-info
++.B bmc-info
+ .PP
+ A tool to read information about a BMC such as device version numbers,
+ device support, and globally unique IDs (guids).
+ .PP
+-.B Bmc-watchdog
++.B bmc-watchdog
+ .PP
+ A tool/daemon to manage a BMC Watchdog. This tool is typically used
+ for system timeout management and automatic system restarts in the
+ event of a system crash.
+ .PP
+-.B Ipmi-chassis
++.B ipmi-chassis
+ .PP
+ A tool to manage/monitor a chassis, such as chassis power,
+ identification (i.e. LED control), and status.
+ .PP
+-.B Ipmi-fru
++.B ipmi-fru
+ .PP
+ A tool to read field replaceable unit (FRU) information from a
+ motherboard/machine.
+ .PP
+-.B Ipmi-sel
++.B ipmi-sel
+ .PP
+ A tool to read and manage IPMI System Event Log (SEL) records.  SEL
+ records store system event information and may be useful for debugging
+ problems.
+ .PP
+-.B Ipmi-sensors
++.B ipmi-sensors
+ .PP
+ A tool to read IPMI sensor readings and sensor data repository (SDR)
+ information.
+ .PP
+-.B Ipmipower
++.B ipmipower
+ .PP
+ A tool for remote power control.
+ .PP
+-.B Ipmiconsole
++.B ipmiconsole
+ .PP
+ A tool for Serial-over-Lan (SOL) console access.
+ .PP
+-.B Ipmi-config
++.B ipmi-config
+ .PP
+ A tool to configure BMC and IPMI information.  In can be used to
+ configured usernames, passwords, networking information, security,
+@@ -203,48 +203,48 @@ Serial-over-LAN (SOL), Platform Event Fi
+ power restoration policy, sensor thresholds, sensor events, and many
+ more configuration options.
+ .PP
+-.B Ipmi-raw
++.B ipmi-raw
+ .PP
+ A tool that provides hex input/output of IPMI commands.
+ .PP
+-.B Ipmi-locate
++.B ipmi-locate
+ .PP
+ A tool that can probe for information about the location of a BMC
+ device, such as device addresses.
+ .PP
+-.B Ipmi-pet
++.B ipmi-pet
+ .PP
+ A tool to parse and interpret Platform Event Traps (PET).
+ .PP
+-.B Ipmi-dcmi
++.B ipmi-dcmi
+ .PP
+ A tool to perform Data Center Manageability Interface (DCMI) IPMI
+ extension commands.  Supports extensions for asset management and
+ power usage management.
+ .PP
+-.B Bmc-device
++.B bmc-device
+ .PP
+ A tool to perform advanced BMC commands, such as resetting the BMC,
+ configuring ACPI, configuring SDR/SEL time, manually generating
+ events, re-arming sensors, and configuring manufacturer settings.
+ .PP
+-.B Ipmiping
++.B ipmiping
+ .PP
+ An IPMI ping tool for debugging.
+ .PP
+-.B Rmcpping
++.B rmcpping
+ .PP
+ A RMCP ping tool for debugging.
+ .PP
+-.B Ipmi-oem
++.B ipmi-oem
+ .PP
+ An IPMI tool for OEM specific commands.
+ .PP
+-.B Ipmidetect/Ipmidetectd
++.B ipmidetect/ipmidetectd
+ .PP
+ A tool and daemon for IPMI node detection.
+ .PP
+-.B Ipmiseld
++.B ipmiseld
+ .PP
+ A daemon that regularly polls the SEL and stores the events to the
+ local syslog.
+diff -urNp old/man/ipmi-sensors.8.pre.in new/man/ipmi-sensors.8.pre.in
+--- old/man/ipmi-sensors.8.pre.in	2017-08-29 14:01:35.453296600 +0200
++++ new/man/ipmi-sensors.8.pre.in	2017-08-29 14:05:45.726670330 +0200
+@@ -5,14 +5,14 @@ ipmi-sensors \- display IPMI sensor info
+ .B ipmi-sensors
+ [\fIOPTION\fR...]
+ .SH "DESCRIPTION"
+-.B Ipmi-sensors
++.B ipmi-sensors
+ displays current readings of sensors and sensor data repository (SDR)
+ information.  The default display outputs each sensor's record id,
+ sensor name, sensor type name, sensor reading (if appropriate), and
+ the current sensor event.  More verbose information can be found using
+ the verbose options specified below.
+ 
+-.B Ipmi-sensors
++.B ipmi-sensors
+ does not inform the user if a problem exists with a particular sensor
+ because sensor readings and events are not analyzed by default. Users
+ may wish to use the \fB\-\-output\-sensor\-state\fR option to output
+@@ -57,7 +57,7 @@ To perform some advanced SDR management,
+ #include <@top_srcdir@/man/manpage-common-misc.man>
+ .SH "IPMI-SENSORS OPTIONS"
+ The following options are specific to
+-.B Ipmi-sensors.
++.B ipmi-sensors.
+ .TP
+ \fB\-v\fR, \fB\-\-verbose\fR
+ Output verbose sensor output.  This option will output additional

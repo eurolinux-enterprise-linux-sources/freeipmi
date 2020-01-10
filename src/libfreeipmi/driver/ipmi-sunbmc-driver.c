@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -303,6 +303,7 @@ ipmi_sunbmc_ctx_io_init (ipmi_sunbmc_ctx_t ctx)
   uint8_t method;
 #endif /* !(defined(HAVE_SYS_STROPTS_H) && defined(IOCTL_IPMI_INTERFACE_METHOD)) */
   char *driver_device;
+  int flags;
 
   if (!ctx || ctx->magic != IPMI_SUNBMC_CTX_MAGIC)
     {
@@ -320,6 +321,19 @@ ipmi_sunbmc_ctx_io_init (ipmi_sunbmc_ctx_t ctx)
 
   if ((ctx->device_fd = open (driver_device,
                               O_RDWR)) < 0)
+    {
+      SUNBMC_ERRNO_TO_SUNBMC_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+
+  flags = fcntl(ctx->device_fd, F_GETFD);
+  if (flags < 0)
+    {
+      SUNBMC_ERRNO_TO_SUNBMC_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+  flags |= FD_CLOEXEC;
+  if (fcntl(ctx->device_fd, F_SETFD, flags) < 0)
     {
       SUNBMC_ERRNO_TO_SUNBMC_ERRNUM (ctx, errno);
       goto cleanup;
@@ -489,7 +503,7 @@ _sunbmc_read (ipmi_sunbmc_ctx_t ctx,
   unsigned int rs_buf_len = 0;
 #endif /* !defined(HAVE_SYS_STROPTS_H) */
   fd_set read_fds;
-  struct timeval tv;
+  struct timeval tv, tv_orig, start, end, delta;
   int n;
 
   assert (ctx);
@@ -515,15 +529,40 @@ _sunbmc_read (ipmi_sunbmc_ctx_t ctx,
   tv.tv_sec = IPMI_SUNBMC_TIMEOUT;
   tv.tv_usec = 0;
 
-  if ((n = select (ctx->device_fd + 1,
-                   &read_fds,
-                   NULL,
-                   NULL,
-                   &tv)) < 0)
+  tv_orig.tv_sec = tv.tv_sec;
+  tv_orig.tv_usec = tv.tv_usec;
+
+  if (gettimeofday (&start, NULL) < 0)
     {
       SUNBMC_ERRNO_TO_SUNBMC_ERRNUM (ctx, errno);
       return (-1);
     }
+
+  do {
+    if ((n = select (ctx->device_fd + 1,
+		     &read_fds,
+		     NULL,
+		     NULL,
+		     &tv)) < 0)
+      {
+	if (errno != EINTR)
+	  {
+	    SUNBMC_ERRNO_TO_SUNBMC_ERRNUM (ctx, errno);
+	    return (-1);
+	  }
+
+	if (gettimeofday (&end, NULL) < 0)
+	  {
+	    SUNBMC_ERRNO_TO_SUNBMC_ERRNUM (ctx, errno);
+	    return (-1);
+	  }
+
+	/* delta = end - start */
+	timersub (&end, &start, &delta);
+	/* tv = tv_orig - delta */
+	timersub (&tv_orig, &delta, &tv);
+      }
+  } while (n < 0);
 
   if (!n)
     {

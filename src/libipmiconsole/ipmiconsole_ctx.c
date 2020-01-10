@@ -1,7 +1,7 @@
 /*****************************************************************************\
  *  $Id: ipmiconsole_ctx.c,v 1.57 2010-02-08 22:02:30 chu11 Exp $
  *****************************************************************************
- *  Copyright (C) 2007-2012 Lawrence Livermore National Security, LLC.
+ *  Copyright (C) 2007-2015 Lawrence Livermore National Security, LLC.
  *  Copyright (C) 2006-2007 The Regents of the University of California.
  *  Produced at Lawrence Livermore National Laboratory (cf, DISCLAIMER).
  *  Written by Albert Chu <chu11@llnl.gov>
@@ -121,18 +121,51 @@ ipmiconsole_ctx_cleanup (ipmiconsole_ctx_t c)
     free (c);
 }
 
-/* Wrapper for list callback */
+/* Wrapper for list callback on console_engine_ctxs_to_destroy */
 void
-ipmiconsole_ctx_list_cleanup (ipmiconsole_ctx_t c)
+ipmiconsole_ctx_garbage_collection_cleanup (ipmiconsole_ctx_t c)
 {
+  int perr;
+
   assert (c);
   assert (c->magic == IPMICONSOLE_CTX_MAGIC);
 
-  ipmiconsole_ctx_config_cleanup (c);
-  ipmiconsole_ctx_debug_cleanup (c);
-  ipmiconsole_ctx_signal_cleanup (c);
-  ipmiconsole_ctx_blocking_cleanup (c);
-  ipmiconsole_ctx_cleanup (c);
+  if ((perr = pthread_mutex_lock (&(c->signal.mutex_ctx_state))) != 0)
+    IPMICONSOLE_DEBUG (("pthread_mutex_lock: %s", strerror (perr)));
+
+  assert (c->signal.ctx_state == IPMICONSOLE_CTX_STATE_GARBAGE_COLLECTION_WAIT
+          || c->signal.ctx_state == IPMICONSOLE_CTX_STATE_GARBAGE_COLLECTION_USER_DESTROYED);
+
+  /* Be careful, if the mutex is destroyed we shouldn't unlock it. */
+
+  /* Most common/reasonable state to expect under normal operations
+   */
+  if (c->signal.ctx_state == IPMICONSOLE_CTX_STATE_GARBAGE_COLLECTION_USER_DESTROYED)
+    {
+      ipmiconsole_ctx_config_cleanup (c);
+      ipmiconsole_ctx_debug_cleanup (c);
+      ipmiconsole_ctx_signal_cleanup (c);
+      ipmiconsole_ctx_blocking_cleanup (c);
+      ipmiconsole_ctx_cleanup (c);
+    }
+  /* When tearing down engine, contexts could be in garbage collection
+   * wait b/c we're tearing down things.  Move to ENGINE_DESTOYED to
+   * allow ipmiconsole_ctx_destroy() to do final cleanup.
+   */
+  else if (c->signal.ctx_state == IPMICONSOLE_CTX_STATE_GARBAGE_COLLECTION_WAIT)
+    {
+      c->signal.ctx_state = IPMICONSOLE_CTX_STATE_ENGINE_DESTROYED; 
+
+      if ((perr = pthread_mutex_unlock (&(c->signal.mutex_ctx_state))) != 0)
+        IPMICONSOLE_DEBUG (("pthread_mutex_unlock: %s", strerror (perr)));
+    }
+  else
+    {
+      IPMICONSOLE_DEBUG (("invalid ctx_state in ipmiconsole_ctx_garbage_collection_cleanup: %d", c->signal.ctx_state));
+
+      if ((perr = pthread_mutex_unlock (&(c->signal.mutex_ctx_state))) != 0)
+        IPMICONSOLE_DEBUG (("pthread_mutex_unlock: %s", strerror (perr)));
+    }
 }
 
 int
@@ -406,13 +439,12 @@ ipmiconsole_ctx_signal_setup (ipmiconsole_ctx_t c)
     }
   c->signal.status = IPMICONSOLE_CTX_STATUS_NOT_SUBMITTED;
 
-  if ((perr = pthread_mutex_init (&c->signal.destroyed_mutex, NULL)) != 0)
+  if ((perr = pthread_mutex_init (&c->signal.mutex_ctx_state, NULL)) != 0)
     {
       errno = perr;
       return (-1);
     }
-  c->signal.user_has_destroyed = 0;
-  c->signal.moved_to_destroyed = 0;
+  c->signal.ctx_state = IPMICONSOLE_CTX_STATE_INIT;
 
   return (0);
 }
@@ -424,7 +456,7 @@ ipmiconsole_ctx_signal_cleanup (ipmiconsole_ctx_t c)
   assert (c->magic == IPMICONSOLE_CTX_MAGIC);
 
   pthread_mutex_destroy (&(c->signal.status_mutex));
-  pthread_mutex_destroy (&(c->signal.destroyed_mutex));
+  pthread_mutex_destroy (&(c->signal.mutex_ctx_state));
 }
 
 int
@@ -471,20 +503,6 @@ ipmiconsole_ctx_blocking_cleanup (ipmiconsole_ctx_t c)
   pthread_mutex_destroy (&(c->blocking.blocking_mutex));
 }
 
-static void
-_ipmiconsole_ctx_connection_init (ipmiconsole_ctx_t c)
-{
-  assert (c);
-  assert (c->magic == IPMICONSOLE_CTX_MAGIC);
-
-  memset (&(c->connection), '\0', sizeof (struct ipmiconsole_ctx_connection));
-  c->connection.user_fd = -1;
-  c->connection.ipmiconsole_fd = -1;
-  c->connection.ipmi_fd = -1;
-  c->connection.asynccomm[0] = -1;
-  c->connection.asynccomm[1] = -1;
-}
-
 int
 ipmiconsole_ctx_connection_setup (ipmiconsole_ctx_t c)
 {
@@ -496,7 +514,12 @@ ipmiconsole_ctx_connection_setup (ipmiconsole_ctx_t c)
   assert (c->magic == IPMICONSOLE_CTX_MAGIC);
   assert (!(c->session_submitted));
 
-  _ipmiconsole_ctx_connection_init (c);
+  memset (&(c->connection), '\0', sizeof (struct ipmiconsole_ctx_connection));
+  c->connection.user_fd = -1;
+  c->connection.ipmiconsole_fd = -1;
+  c->connection.ipmi_fd = -1;
+  c->connection.asynccomm[0] = -1;
+  c->connection.asynccomm[1] = -1;
 
   /* File Descriptor User Interface */
 
@@ -525,6 +548,7 @@ ipmiconsole_ctx_connection_setup (ipmiconsole_ctx_t c)
 
   /* Copy for API level */
   c->fds.user_fd = c->connection.user_fd;
+  c->fds.user_fd_retrieved = 0;
 
   secure_malloc_flag = (c->config.engine_flags & IPMICONSOLE_ENGINE_LOCK_MEMORY) ? 1 : 0;
 
@@ -921,22 +945,37 @@ __ipmiconsole_ctx_connection_cleanup (ipmiconsole_ctx_t c, int session_submitted
     {
       /* ignore potential error, cleanup path */
       if (c->connection.user_fd >= 0)
-        close (c->connection.user_fd);
+	{
+	  close (c->connection.user_fd);
+          c->fds.user_fd_retrieved = 0;
+	}
     }
+  c->connection.user_fd = -1;
+
   /* ignore potential error, cleanup path */
   if (c->connection.ipmiconsole_fd >= 0)
     close (c->connection.ipmiconsole_fd);
+  c->connection.ipmiconsole_fd = -1;
+
   if (c->connection.console_remote_console_to_bmc)
     scbuf_destroy (c->connection.console_remote_console_to_bmc, secure_malloc_flag);
   if (c->connection.console_bmc_to_remote_console)
     scbuf_destroy (c->connection.console_bmc_to_remote_console, secure_malloc_flag);
+
   /* ignore potential error, cleanup path */
   if (c->connection.ipmi_fd >= 0)
     close (c->connection.ipmi_fd);
+  c->connection.ipmi_fd = -1;
+
   if (c->connection.ipmi_from_bmc)
     scbuf_destroy (c->connection.ipmi_from_bmc, secure_malloc_flag);
   if (c->connection.ipmi_to_bmc)
     scbuf_destroy (c->connection.ipmi_to_bmc, secure_malloc_flag);
+
+  /* Set to -1, closing is handled on user end when calling ipmiconsole_ctx_destroy() */
+  c->connection.asynccomm[0] = -1;
+  c->connection.asynccomm[1] = -1;
+
   /* Similarly to the user_fd above, it is the responsibility of other
    * code to close asynccomm[0] and asynccomm[1], which is replicated
    * in the context.
@@ -1014,8 +1053,6 @@ __ipmiconsole_ctx_connection_cleanup (ipmiconsole_ctx_t c, int session_submitted
   if (c->connection.obj_close_session_rs)
     fiid_obj_destroy (c->connection.obj_close_session_rs);
 
-  _ipmiconsole_ctx_connection_init (c);
-
   /* If the session was never submitted (i.e. error in API land), don't
    * move this around.
    */
@@ -1039,48 +1076,59 @@ __ipmiconsole_ctx_connection_cleanup (ipmiconsole_ctx_t c, int session_submitted
   /* Note: the code in __ipmiconsole_ctx_connection_cleanup() and
    * ipmiconsole_garbage_collector() may look like it may race and
    * could deadlock.  (ABBA and BAAB deadlock situation).  However,
-   * the context mutex c->signal.destroyed_mutex is accessed in
+   * the context mutex c->signal.mutex_ctx_state is accessed in
    * __ipmiconsole_ctx_connection_cleanup() when trying to add this item
    * to the console_engine_ctxs_to_destroy list.  It is accessed in
    * ipmiconsole_garbage_collector() only on the items already in the
    * console_engine_ctxs_to_destroy list.  So the
-   * c->signal.destroyed_mutex can never be raced against in these two
+   * c->signal.mutex_ctx_state can never be raced against in these two
    * functions.
    */
-  if ((perr = pthread_mutex_lock (&(c->signal.destroyed_mutex))) != 0)
+  if ((perr = pthread_mutex_lock (&(c->signal.mutex_ctx_state))) != 0)
     IPMICONSOLE_DEBUG (("pthread_mutex_lock: %s", strerror (perr)));
 
-  if (c->signal.user_has_destroyed)
+  assert (c->signal.ctx_state == IPMICONSOLE_CTX_STATE_INIT
+          || c->signal.ctx_state == IPMICONSOLE_CTX_STATE_ENGINE_SUBMITTED
+          || c->signal.ctx_state == IPMICONSOLE_CTX_STATE_USER_DESTROYED);
+
+  if (c->signal.ctx_state == IPMICONSOLE_CTX_STATE_USER_DESTROYED)
     {
+      ipmiconsole_ctx_config_cleanup (c);
       ipmiconsole_ctx_debug_cleanup (c);
       ipmiconsole_ctx_signal_cleanup (c);
       ipmiconsole_ctx_blocking_cleanup (c);
       ipmiconsole_ctx_cleanup (c);
     }
+  /* Can be in INIT because of error early in setup */
+  else if (c->signal.ctx_state == IPMICONSOLE_CTX_STATE_INIT
+           || c->signal.ctx_state == IPMICONSOLE_CTX_STATE_ENGINE_SUBMITTED)
+    {
+      void *ptr;
+
+      c->signal.ctx_state = IPMICONSOLE_CTX_STATE_GARBAGE_COLLECTION_WAIT;
+      
+      /* I suppose if we fail here, we mem-leak?? Log for now ... */
+      
+      if ((perr = pthread_mutex_lock (&(console_engine_ctxs_to_destroy_mutex))) != 0)
+        IPMICONSOLE_DEBUG (("pthread_mutex_lock: %s", strerror (perr)));
+      
+      if (!(ptr = list_append (console_engine_ctxs_to_destroy, c)))
+        IPMICONSOLE_DEBUG (("list_append: %s", strerror (errno)));
+      
+      if (ptr != (void *)c)
+        IPMICONSOLE_DEBUG (("list_append: invalid pointer: ptr=%p; c=%p", ptr, c));
+      
+      if ((perr = pthread_mutex_unlock (&(console_engine_ctxs_to_destroy_mutex))) != 0)
+        IPMICONSOLE_DEBUG (("pthread_mutex_unlock: %s", strerror (perr)));
+
+      if ((perr = pthread_mutex_unlock (&(c->signal.mutex_ctx_state))) != 0)
+        IPMICONSOLE_DEBUG (("pthread_mutex_unlock: %s", strerror (perr)));
+    }
   else
     {
-      if (!c->signal.moved_to_destroyed)
-        {
-          void *ptr;
-
-          c->signal.moved_to_destroyed++;
-
-          /* I suppose if we fail here, we mem-leak?? Log for now ... */
-
-          if ((perr = pthread_mutex_lock (&(console_engine_ctxs_to_destroy_mutex))) != 0)
-            IPMICONSOLE_DEBUG (("pthread_mutex_lock: %s", strerror (perr)));
-
-          if (!(ptr = list_append (console_engine_ctxs_to_destroy, c)))
-            IPMICONSOLE_DEBUG (("list_append: %s", strerror (errno)));
-
-          if (ptr != (void *)c)
-            IPMICONSOLE_DEBUG (("list_append: invalid pointer: ptr=%p; c=%p", ptr, c));
-
-          if ((perr = pthread_mutex_unlock (&(console_engine_ctxs_to_destroy_mutex))) != 0)
-            IPMICONSOLE_DEBUG (("pthread_mutex_unlock: %s", strerror (perr)));
-        }
-
-      if ((perr = pthread_mutex_unlock (&(c->signal.destroyed_mutex))) != 0)
+      IPMICONSOLE_DEBUG (("invalid ctx_state in __ipmiconsole_ctx_connection_cleanup: %d", c->signal.ctx_state));
+      
+      if ((perr = pthread_mutex_unlock (&(c->signal.mutex_ctx_state))) != 0)
         IPMICONSOLE_DEBUG (("pthread_mutex_unlock: %s", strerror (perr)));
     }
 }
@@ -1210,6 +1258,7 @@ ipmiconsole_ctx_session_setup (ipmiconsole_ctx_t c)
   c->session.deactivate_only_succeeded_flag = 0;
 
   c->session.retransmission_count = 0;
+  c->session.workaround_retransmission_count = 0;
   c->session.errors_count = 0;
   c->session.session_sequence_number_errors_count = 0;
   c->session.activate_payloads_count = 0;
@@ -1312,8 +1361,9 @@ ipmiconsole_ctx_fds_setup (ipmiconsole_ctx_t c)
   assert (c);
   assert (c->magic == IPMICONSOLE_CTX_MAGIC);
 
-  /* init to -1 b/c -1 isn't a legit fd */
+  /* init fds to -1 b/c -1 isn't a legit fd */
   c->fds.user_fd = -1;
+  c->fds.user_fd_retrieved = 0;
   c->fds.asynccomm[0] = -1;
   c->fds.asynccomm[1] = -1;
 }
@@ -1328,8 +1378,11 @@ ipmiconsole_ctx_fds_cleanup (ipmiconsole_ctx_t c)
    * engine.  Closing asynccomm[1] first could result in a EPIPE
    * instead.
    */
-  /* ignore potential error, cleanup path */
-  close (c->fds.user_fd);
+  if (!c->fds.user_fd_retrieved)
+    {
+      /* ignore potential error, cleanup path */
+      close (c->fds.user_fd);
+    }
   /* ignore potential error, cleanup path */
   close (c->fds.asynccomm[0]);
   /* ignore potential error, cleanup path */

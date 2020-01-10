@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@
 #include "freeipmi/sdr/ipmi-sdr.h"
 #include "freeipmi/spec/ipmi-comp-code-spec.h"
 #include "freeipmi/util/ipmi-sensor-and-event-code-tables-util.h"
+#include "freeipmi/util/ipmi-timestamp-util.h"
 #include "freeipmi/util/ipmi-util.h"
 
 #include "ipmi-sel-common.h"
@@ -127,6 +128,7 @@ ipmi_sel_ctx_create (ipmi_ctx_t ipmi_ctx, ipmi_sdr_ctx_t sdr_ctx)
   ctx->ipmi_ctx = ipmi_ctx;
   ctx->sdr_ctx = sdr_ctx;
   ctx->interpret_ctx = NULL;
+  ctx->utc_offset = 0;
 
   ctx->sel_entries_loaded = 0;
 
@@ -412,7 +414,7 @@ ipmi_sel_ctx_set_ipmi_version (ipmi_sel_ctx_t ctx,
 int
 ipmi_sel_ctx_get_parameter (ipmi_sel_ctx_t ctx,
 			    unsigned int parameter,
-			    void **ptr)
+			    void *ptr)
 {
   if (!ctx || ctx->magic != IPMI_SEL_CTX_MAGIC)
     {
@@ -429,10 +431,10 @@ ipmi_sel_ctx_get_parameter (ipmi_sel_ctx_t ctx,
   switch (parameter)
     {
     case IPMI_SEL_PARAMETER_INTERPRET_CONTEXT:
-      if (!ctx->interpret_ctx)
-	(*ptr) = NULL;
-      else
-	(*ptr) = &(ctx->interpret_ctx);
+      (*(ipmi_interpret_ctx_t *)ptr) = ctx->interpret_ctx;
+      break;
+    case IPMI_SEL_PARAMETER_UTC_OFFSET:
+      (*(int *)ptr) = ctx->utc_offset;
       break;
     default:
       SEL_SET_ERRNUM (ctx, IPMI_SEL_ERR_PARAMETERS);
@@ -474,6 +476,21 @@ ipmi_sel_ctx_set_parameter (ipmi_sel_ctx_t ctx,
 	}
       else
 	ctx->interpret_ctx = NULL;
+      break;
+    case IPMI_SEL_PARAMETER_UTC_OFFSET:
+      if (ptr)
+	{
+	  int tmp = *((int *)ptr);
+	  
+	  if (!IPMI_UTC_OFFSET_VALID (tmp))
+	    {
+	      SEL_SET_ERRNUM (ctx, IPMI_SEL_ERR_PARAMETERS);
+	      return (-1);
+	    }
+	  ctx->utc_offset = tmp;
+	}
+      else
+	ctx->utc_offset = 0;
       break;
     default:
       SEL_SET_ERRNUM (ctx, IPMI_SEL_ERR_PARAMETERS);
@@ -2184,9 +2201,10 @@ ipmi_sel_delete_sel_entry (ipmi_sel_ctx_t ctx, uint16_t record_id)
                                      record_id,
                                      obj_cmd_rs) < 0)
         {
-          if (ipmi_ctx_errnum (ctx->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-              && (ipmi_check_completion_code (obj_cmd_rs, IPMI_COMP_CODE_REQUESTED_SENSOR_DATA_OR_RECORD_NOT_PRESENT) == 1
-                  || ipmi_check_completion_code (obj_cmd_rs, IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
+          if ((ipmi_ctx_errnum (ctx->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	       && ipmi_check_completion_code (obj_cmd_rs, IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
+	      || (ipmi_ctx_errnum (ctx->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+		  && ipmi_check_completion_code (obj_cmd_rs, IPMI_COMP_CODE_REQUESTED_SENSOR_DATA_OR_RECORD_NOT_PRESENT) == 1))
             {
               SEL_SET_ERRNUM (ctx, IPMI_SEL_ERR_NOT_FOUND);
               goto cleanup;

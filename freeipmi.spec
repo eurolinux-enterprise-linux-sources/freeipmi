@@ -2,8 +2,8 @@
 # Copyright (c) 2003 FreeIPMI Core Team
 
 Name:             freeipmi
-Version:          1.2.9
-Release:          8%{?dist}
+Version:          1.5.7
+Release:          2%{?dist}
 Summary:          IPMI remote console and system management software
 License:          GPLv3+
 Group:            Applications/System
@@ -14,12 +14,13 @@ Source2:          ipmidetectd.service
 Source3:          ipmiseld.service
 Source4:          os-shutdown-event.service
 Source5:          os-startup-event.service
-Patch1:           freeipmi-1.2.1-bigendauth.patch
-BuildRequires:    libgcrypt-devel texinfo systemd-units
-Requires(preun):  info systemd-units
-Requires(post):   info systemd-units systemd-sysv
-Requires(postun): systemd-units
-Requires:         OpenIPMI-modalias
+
+Patch1:           freeipmi-1.5.7-manpage.patch
+
+BuildRequires:    libgcrypt-devel texinfo systemd
+Requires(preun):  info systemd
+Requires(post):   info systemd systemd-sysv
+Requires(postun): systemd
 
 %description
 The FreeIPMI project provides "Remote-Console" (out-of-band) and
@@ -62,7 +63,7 @@ IPMI SEL syslog logging daemon.
 
 %prep
 %setup -q
-%patch1 -p1 -b .bigendauth
+%patch1 -p1 -b .manpage
 
 %build
 export CFLAGS="-D_GNU_SOURCE $RPM_OPT_FLAGS"
@@ -213,6 +214,7 @@ fi
 %{_sbindir}/bmc-config
 %{_sbindir}/bmc-info
 %{_sbindir}/bmc-device
+%{_sbindir}/ipmi-config
 %{_sbindir}/ipmi-fru
 %{_sbindir}/ipmi-locate
 %{_sbindir}/ipmi-oem
@@ -241,6 +243,8 @@ fi
 %{_mandir}/man5/bmc-config.conf.5*
 %{_mandir}/man8/bmc-info.8*
 %{_mandir}/man8/bmc-device.8*
+%{_mandir}/man8/ipmi-config.8*
+%{_mandir}/man5/ipmi-config.conf.5*
 %{_mandir}/man8/ipmi-fru.8*
 %{_mandir}/man8/ipmi-locate.8*
 %{_mandir}/man8/ipmi-oem.8*
@@ -300,11 +304,15 @@ fi
 %dir %{_includedir}/freeipmi/locate
 %dir %{_includedir}/freeipmi/payload
 %dir %{_includedir}/freeipmi/record-format
+%dir %{_includedir}/freeipmi/record-format/oem
 %dir %{_includedir}/freeipmi/sdr
+%dir %{_includedir}/freeipmi/sdr/oem
 %dir %{_includedir}/freeipmi/sel
 %dir %{_includedir}/freeipmi/sensor-read
 %dir %{_includedir}/freeipmi/spec
+%dir %{_includedir}/freeipmi/spec/oem
 %dir %{_includedir}/freeipmi/templates
+%dir %{_includedir}/freeipmi/templates/oem
 %dir %{_includedir}/freeipmi/util
 %{_includedir}/ipmiconsole.h
 %{_includedir}/ipmidetect.h
@@ -321,11 +329,15 @@ fi
 %{_includedir}/freeipmi/locate/*.h
 %{_includedir}/freeipmi/payload/*.h
 %{_includedir}/freeipmi/record-format/*.h
+%{_includedir}/freeipmi/record-format/oem/*.h
 %{_includedir}/freeipmi/sdr/*.h
+%{_includedir}/freeipmi/sdr/oem/*.h
 %{_includedir}/freeipmi/sel/*.h
 %{_includedir}/freeipmi/sensor-read/*.h
 %{_includedir}/freeipmi/spec/*.h
+%{_includedir}/freeipmi/spec/oem/*.h
 %{_includedir}/freeipmi/templates/*.h
+%{_includedir}/freeipmi/templates/oem/*.h
 %{_includedir}/freeipmi/util/*.h
 %{_mandir}/man3/*
 %{_libdir}/pkgconfig/*
@@ -357,6 +369,13 @@ fi
 %dir %{_localstatedir}/cache/ipmiseld
 
 %changelog
+* Mon Nov 20 2017 Josef Ridky <jridky@redhat.com> - 1.5.7-2
+- Additional fix of manpage command examples (#1353981)
+
+* Tue Aug 29 2017 Josef Ridky <jridky@redhat.com> - 1.5.7-1
+- Rebase to the latest upstream release 1.5.7 (#1435848)
+- Fix manpage command examples (#1353981) in separate commit
+
 * Tue Jun 28 2016 Boris Ranto <branto@redhat.com> - 1.2.9-8
 - Package os event systemd services (#1122307)
 

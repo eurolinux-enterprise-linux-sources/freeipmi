@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 FreeIPMI Core Team
+ * Copyright (C) 2008-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,6 +55,7 @@
 #include "pstdout.h"
 #include "tool-sdr-cache-common.h"
 #include "tool-sensor-common.h"
+#include "tool-util-common.h"
 
 /* Some slots resolve to 2.0 Watts when "off" */  
 #define IPMI_OEM_DELL_ZERO_DEGREE_EPSILON 2.5
@@ -95,13 +96,14 @@ _get_dell_system_info_short_string (ipmi_oem_state_data_t *state_data,
                                            IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
                                            obj_cmd_rs) < 0)
     {
-      if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	  && ((ipmi_check_completion_code (obj_cmd_rs,
-					   IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+      if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	   && ((ipmi_check_completion_code (obj_cmd_rs,
+					    IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+	       || (ipmi_check_completion_code (obj_cmd_rs,
+					       IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	  || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	      && ipmi_check_completion_code (obj_cmd_rs,
+					     IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	{
 	  pstdout_fprintf (state_data->pstate,
 			   stderr,
@@ -213,13 +215,14 @@ _get_dell_system_info_long_string (ipmi_oem_state_data_t *state_data,
                                            IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
                                            obj_cmd_rs) < 0)
     {
-      if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	  && ((ipmi_check_completion_code (obj_cmd_rs,
-					   IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+      if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	   && ((ipmi_check_completion_code (obj_cmd_rs,
+					    IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+	       || (ipmi_check_completion_code (obj_cmd_rs,
+					       IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	  || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	      && ipmi_check_completion_code (obj_cmd_rs,
+					     IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	{
 	  pstdout_fprintf (state_data->pstate,
 			   stderr,
@@ -409,13 +412,14 @@ _get_dell_system_info_bytes (ipmi_oem_state_data_t *state_data,
                                            IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
                                            obj_cmd_rs) < 0)
     {
-      if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	  && ((ipmi_check_completion_code (obj_cmd_rs,
-					   IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+      if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	   && ((ipmi_check_completion_code (obj_cmd_rs,
+					    IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+	       || (ipmi_check_completion_code (obj_cmd_rs,
+					       IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	  || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	      && ipmi_check_completion_code (obj_cmd_rs,
+					     IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	{
 	  pstdout_fprintf (state_data->pstate,
 			   stderr,
@@ -886,13 +890,14 @@ _output_dell_system_info_cmc_info (ipmi_oem_state_data_t *state_data)
 					       IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
 					       obj_cmd_rs) < 0)
 	{
-	  if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	      && ((ipmi_check_completion_code (obj_cmd_rs,
-					       IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-		  || (ipmi_check_completion_code (obj_cmd_rs,
-						  IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
-		  || (ipmi_check_completion_code (obj_cmd_rs,
-						  IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	  if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	       && ((ipmi_check_completion_code (obj_cmd_rs,
+						IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+		   || (ipmi_check_completion_code (obj_cmd_rs,
+						   IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	      || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+		  && ipmi_check_completion_code (obj_cmd_rs,
+						 IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	    {
 	      pstdout_fprintf (state_data->pstate,
 			       stderr,
@@ -1168,13 +1173,14 @@ _output_dell_system_info_cmc_ipv6_info (ipmi_oem_state_data_t *state_data)
 					       IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
 					       obj_cmd_rs) < 0)
 	{
-	  if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	      && ((ipmi_check_completion_code (obj_cmd_rs,
-					       IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-		  || (ipmi_check_completion_code (obj_cmd_rs,
-						  IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
-		  || (ipmi_check_completion_code (obj_cmd_rs,
-						  IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	  if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	       && ((ipmi_check_completion_code (obj_cmd_rs,
+						IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+		   || (ipmi_check_completion_code (obj_cmd_rs,
+						   IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	      || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+		  && ipmi_check_completion_code (obj_cmd_rs,
+						 IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	    {
 	      pstdout_fprintf (state_data->pstate,
 			       stderr,
@@ -1352,13 +1358,14 @@ _output_dell_system_info_snmp_ipv6_info (ipmi_oem_state_data_t *state_data)
 					   IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
 					   obj_cmd_rs) < 0)
     {
-      if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	  && ((ipmi_check_completion_code (obj_cmd_rs,
-					   IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+      if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	   && ((ipmi_check_completion_code (obj_cmd_rs,
+					    IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+	       || (ipmi_check_completion_code (obj_cmd_rs,
+					       IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	  || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	      && ipmi_check_completion_code (obj_cmd_rs,
+					     IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	{
 	  pstdout_fprintf (state_data->pstate,
 			   stderr,
@@ -1444,13 +1451,14 @@ _output_dell_system_info_snmp_ipv6_info (ipmi_oem_state_data_t *state_data)
 					       IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
 					       obj_cmd_rs) < 0)
 	{
-	  if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	      && ((ipmi_check_completion_code (obj_cmd_rs,
-					       IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-		  || (ipmi_check_completion_code (obj_cmd_rs,
-						  IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
-		  || (ipmi_check_completion_code (obj_cmd_rs,
-						  IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	  if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	       && ((ipmi_check_completion_code (obj_cmd_rs,
+						IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+		   || (ipmi_check_completion_code (obj_cmd_rs,
+						   IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	      || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+		  && ipmi_check_completion_code (obj_cmd_rs,
+						 IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	    {
 	      pstdout_fprintf (state_data->pstate,
 			       stderr,
@@ -1583,13 +1591,14 @@ _output_dell_system_info_10g_mac_addresses (ipmi_oem_state_data_t *state_data)
                                            IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
                                            obj_cmd_rs) < 0)
     {
-      if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	  && ((ipmi_check_completion_code (obj_cmd_rs,
-					   IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+      if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	   && ((ipmi_check_completion_code (obj_cmd_rs,
+					    IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+	       || (ipmi_check_completion_code (obj_cmd_rs,
+					       IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	  || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	      && ipmi_check_completion_code (obj_cmd_rs,
+					     IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	{
 	  pstdout_fprintf (state_data->pstate,
 			   stderr,
@@ -5058,8 +5067,6 @@ ipmi_oem_dell_get_power_consumption_data (ipmi_oem_state_data_t *state_data)
   uint16_t peak_watt_reading;
   double cumulative_reading_val;
   double peak_amp_reading_val;
-  time_t timetmp;
-  struct tm time_tm;
   char time_buf[IPMI_OEM_TIME_BUFLEN + 1];
   int rs_len;
   int rv = -1;
@@ -5153,16 +5160,22 @@ ipmi_oem_dell_get_power_consumption_data (ipmi_oem_state_data_t *state_data)
 
   cumulative_reading_val = ((double)cumulative_reading) / 1000.0;
 
-  /* Posix says individual calls need not clear/set all portions of
-   * 'struct tm', thus passing 'struct tm' between functions could
-   * have issues.  So we need to memset.
-   */
-  memset (&time_tm, '\0', sizeof(struct tm));
-
-  timetmp = cumulative_start_time;
-  localtime_r (&timetmp, &time_tm);
   memset (time_buf, '\0', IPMI_OEM_TIME_BUFLEN + 1);
-  strftime (time_buf, IPMI_OEM_TIME_BUFLEN, "%D - %T", &time_tm);
+
+  if (ipmi_timestamp_string (cumulative_start_time,
+			     state_data->prog_data->args->common_args.utc_offset,
+			     get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						  IPMI_TIMESTAMP_FLAG_DEFAULT), 
+			     "%D - %T",
+			     time_buf,
+			     IPMI_OEM_TIME_BUFLEN) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "ipmi_timestamp_string: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
 
   pstdout_printf (state_data->pstate,
                   "Cumulative Energy Start Time : %s\n",
@@ -5174,16 +5187,22 @@ ipmi_oem_dell_get_power_consumption_data (ipmi_oem_state_data_t *state_data)
 
   peak_amp_reading_val = ((double)peak_amp_reading) / 10.0;
 
-  /* Posix says individual calls need not clear/set all portions of
-   * 'struct tm', thus passing 'struct tm' between functions could
-   * have issues.  So we need to memset.
-   */
-  memset (&time_tm, '\0', sizeof(struct tm));
-
-  timetmp = peak_amp_time;
-  localtime_r (&timetmp, &time_tm);
   memset (time_buf, '\0', IPMI_OEM_TIME_BUFLEN + 1);
-  strftime (time_buf, IPMI_OEM_TIME_BUFLEN, "%D - %T", &time_tm);
+
+  if (ipmi_timestamp_string (peak_amp_time,
+			     state_data->prog_data->args->common_args.utc_offset,
+			     get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						  IPMI_TIMESTAMP_FLAG_DEFAULT), 
+			     "%D - %T",
+			     time_buf,
+			     IPMI_OEM_TIME_BUFLEN) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "ipmi_timestamp_string: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
 
   pstdout_printf (state_data->pstate,
                   "Peak Amp Time                : %s\n",
@@ -5193,16 +5212,22 @@ ipmi_oem_dell_get_power_consumption_data (ipmi_oem_state_data_t *state_data)
                   "Peak Amp                     : %.2f A\n",
                   peak_amp_reading_val);
 
-  /* Posix says individual calls need not clear/set all portions of
-   * 'struct tm', thus passing 'struct tm' between functions could
-   * have issues.  So we need to memset.
-   */
-  memset (&time_tm, '\0', sizeof(struct tm));
-
-  timetmp = peak_watt_time;
-  localtime_r (&timetmp, &time_tm);
   memset (time_buf, '\0', IPMI_OEM_TIME_BUFLEN + 1);
-  strftime (time_buf, IPMI_OEM_TIME_BUFLEN, "%D - %T", &time_tm);
+
+  if (ipmi_timestamp_string (peak_watt_time,
+			     state_data->prog_data->args->common_args.utc_offset,
+			     get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						  IPMI_TIMESTAMP_FLAG_DEFAULT), 
+			     "%D - %T",
+			     time_buf,
+			     IPMI_OEM_TIME_BUFLEN) < 0)
+    {
+      pstdout_fprintf (state_data->pstate,
+		       stderr,
+		       "ipmi_timestamp_string: %s\n",
+		       strerror (errno));
+      goto cleanup;
+    }
 
   pstdout_printf (state_data->pstate,
                   "Peak Watt Time               : %s\n",
@@ -5755,8 +5780,6 @@ ipmi_oem_dell_get_power_consumption_statistics (ipmi_oem_state_data_t *state_dat
   uint32_t last_hour_power_time = 0;
   uint32_t last_day_power_time = 0;
   uint32_t last_week_power_time = 0;
-  time_t timetmp;
-  struct tm time_tm;
   char time_buf[IPMI_OEM_TIME_BUFLEN + 1];
   int len;
   uint8_t system_info_parameter;
@@ -5839,13 +5862,14 @@ ipmi_oem_dell_get_power_consumption_statistics (ipmi_oem_state_data_t *state_dat
                                            IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
                                            obj_cmd_rs) < 0)
     {
-      if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	  && ((ipmi_check_completion_code (obj_cmd_rs,
-					   IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+      if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	   && ((ipmi_check_completion_code (obj_cmd_rs,
+					    IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+	       || (ipmi_check_completion_code (obj_cmd_rs,
+					       IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	  || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	      && ipmi_check_completion_code (obj_cmd_rs,
+					     IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	{
 	  pstdout_fprintf (state_data->pstate,
 			   stderr,
@@ -5935,16 +5959,22 @@ ipmi_oem_dell_get_power_consumption_statistics (ipmi_oem_state_data_t *state_dat
   if (system_info_parameter == IPMI_SYSTEM_INFO_PARAMETER_OEM_DELL_MAX_POWER_CONSUMPTION_STATISTICS
       || system_info_parameter == IPMI_SYSTEM_INFO_PARAMETER_OEM_DELL_MIN_POWER_CONSUMPTION_STATISTICS)
     {
-      /* Posix says individual calls need not clear/set all portions of
-       * 'struct tm', thus passing 'struct tm' between functions could
-       * have issues.  So we need to memset.
-       */
-      memset (&time_tm, '\0', sizeof(struct tm));
-      
-      timetmp = last_minute_power_time;
-      localtime_r (&timetmp, &time_tm);
       memset (time_buf, '\0', IPMI_OEM_TIME_BUFLEN + 1);
-      strftime (time_buf, IPMI_OEM_TIME_BUFLEN, "%D - %T", &time_tm);
+
+      if (ipmi_timestamp_string (last_minute_power_time,
+				 state_data->prog_data->args->common_args.utc_offset,
+				 get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						      IPMI_TIMESTAMP_FLAG_DEFAULT), 
+				 "%D - %T",
+				 time_buf,
+				 IPMI_OEM_TIME_BUFLEN) < 0)
+	{
+	  pstdout_fprintf (state_data->pstate,
+			   stderr,
+			   "ipmi_timestamp_string: %s\n",
+			   strerror (errno));
+	  goto cleanup;
+	}
       
       pstdout_printf (state_data->pstate,
 		      "Last Minute %s Power Time : %s\n",
@@ -5960,17 +5990,23 @@ ipmi_oem_dell_get_power_consumption_statistics (ipmi_oem_state_data_t *state_dat
   if (system_info_parameter == IPMI_SYSTEM_INFO_PARAMETER_OEM_DELL_MAX_POWER_CONSUMPTION_STATISTICS
       || system_info_parameter == IPMI_SYSTEM_INFO_PARAMETER_OEM_DELL_MIN_POWER_CONSUMPTION_STATISTICS)
     {
-      /* Posix says individual calls need not clear/set all portions of
-       * 'struct tm', thus passing 'struct tm' between functions could
-       * have issues.  So we need to memset.
-       */
-      memset (&time_tm, '\0', sizeof(struct tm));
-
-      timetmp = last_hour_power_time;
-      localtime_r (&timetmp, &time_tm);
       memset (time_buf, '\0', IPMI_OEM_TIME_BUFLEN + 1);
-      strftime (time_buf, IPMI_OEM_TIME_BUFLEN, "%D - %T", &time_tm);
-      
+
+      if (ipmi_timestamp_string (last_hour_power_time,
+				 state_data->prog_data->args->common_args.utc_offset,
+				 get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						      IPMI_TIMESTAMP_FLAG_DEFAULT), 
+				 "%D - %T",
+				 time_buf,
+				 IPMI_OEM_TIME_BUFLEN) < 0)
+	{
+	  pstdout_fprintf (state_data->pstate,
+			   stderr,
+			   "ipmi_timestamp_string: %s\n",
+			   strerror (errno));
+	  goto cleanup;
+	}
+
       pstdout_printf (state_data->pstate,
 		      "Last Hour %s Power Time   : %s\n",
 		      system_info_string,
@@ -5985,16 +6021,22 @@ ipmi_oem_dell_get_power_consumption_statistics (ipmi_oem_state_data_t *state_dat
   if (system_info_parameter == IPMI_SYSTEM_INFO_PARAMETER_OEM_DELL_MAX_POWER_CONSUMPTION_STATISTICS
       || system_info_parameter == IPMI_SYSTEM_INFO_PARAMETER_OEM_DELL_MIN_POWER_CONSUMPTION_STATISTICS)
     {
-      /* Posix says individual calls need not clear/set all portions of
-       * 'struct tm', thus passing 'struct tm' between functions could
-       * have issues.  So we need to memset.
-       */
-      memset (&time_tm, '\0', sizeof(struct tm));
-
-      timetmp = last_day_power_time;
-      localtime_r (&timetmp, &time_tm);
       memset (time_buf, '\0', IPMI_OEM_TIME_BUFLEN + 1);
-      strftime (time_buf, IPMI_OEM_TIME_BUFLEN, "%D - %T", &time_tm);
+
+      if (ipmi_timestamp_string (last_day_power_time,
+				 state_data->prog_data->args->common_args.utc_offset,
+				 get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						      IPMI_TIMESTAMP_FLAG_DEFAULT), 
+				 "%D - %T",
+				 time_buf,
+				 IPMI_OEM_TIME_BUFLEN) < 0)
+	{
+	  pstdout_fprintf (state_data->pstate,
+			   stderr,
+			   "ipmi_timestamp_string: %s\n",
+			   strerror (errno));
+	  goto cleanup;
+	}
 
       pstdout_printf (state_data->pstate,
 		      "Last Day %s Power Time    : %s\n",
@@ -6010,17 +6052,23 @@ ipmi_oem_dell_get_power_consumption_statistics (ipmi_oem_state_data_t *state_dat
   if (system_info_parameter == IPMI_SYSTEM_INFO_PARAMETER_OEM_DELL_MAX_POWER_CONSUMPTION_STATISTICS
       || system_info_parameter == IPMI_SYSTEM_INFO_PARAMETER_OEM_DELL_MIN_POWER_CONSUMPTION_STATISTICS)
     {
-      /* Posix says individual calls need not clear/set all portions of
-       * 'struct tm', thus passing 'struct tm' between functions could
-       * have issues.  So we need to memset.
-       */
-      memset (&time_tm, '\0', sizeof(struct tm));
-
-      timetmp = last_week_power_time;
-      localtime_r (&timetmp, &time_tm);
       memset (time_buf, '\0', IPMI_OEM_TIME_BUFLEN + 1);
-      strftime (time_buf, IPMI_OEM_TIME_BUFLEN, "%D - %T", &time_tm);
-      
+
+      if (ipmi_timestamp_string (last_week_power_time,
+				 state_data->prog_data->args->common_args.utc_offset,
+				 get_timestamp_flags (&(state_data->prog_data->args->common_args),
+						      IPMI_TIMESTAMP_FLAG_DEFAULT), 
+				 "%D - %T",
+				 time_buf,
+				 IPMI_OEM_TIME_BUFLEN) < 0)
+	{
+	  pstdout_fprintf (state_data->pstate,
+			   stderr,
+			   "ipmi_timestamp_string: %s\n",
+			   strerror (errno));
+	  goto cleanup;
+	}
+
       pstdout_printf (state_data->pstate,
 		      "Last Week %s Power Time   : %s\n",
 		      system_info_string,
@@ -6119,13 +6167,14 @@ _get_power_capacity (ipmi_oem_state_data_t *state_data,
                                            IPMI_SYSTEM_INFO_PARAMETERS_NO_BLOCK_SELECTOR,
                                            obj_cmd_rs) < 0)
     {
-      if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	  && ((ipmi_check_completion_code (obj_cmd_rs,
-					   IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+      if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	   && ((ipmi_check_completion_code (obj_cmd_rs,
+					    IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+	       || (ipmi_check_completion_code (obj_cmd_rs,
+					       IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	  || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	      && ipmi_check_completion_code (obj_cmd_rs,
+					     IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	{
 	  pstdout_fprintf (state_data->pstate,
 			   stderr,
@@ -6250,7 +6299,10 @@ ipmi_oem_dell_get_power_capacity (ipmi_oem_state_data_t *state_data)
 {
   uint8_t configuration_parameter_data[IPMI_OEM_MAX_BYTES];
   uint16_t power_capacity;
+#if 0
+  /* to remove compiler warning, unused, unclear why unused, copied logic from dell provided source */
   uint8_t units;
+#endif
   uint16_t maximum_power_consumption;
   uint16_t minimum_power_consumption;
   uint8_t total_number_power_supplies;
@@ -6270,7 +6322,10 @@ ipmi_oem_dell_get_power_capacity (ipmi_oem_state_data_t *state_data)
   power_capacity = configuration_parameter_data[0];
   power_capacity |= (configuration_parameter_data[1] << 8);
 
+#if 0
+  /* to remove compiler warning, unused, unclear why unused, copied logic from dell provided source */
   units = configuration_parameter_data[2];
+#endif
 
   maximum_power_consumption = configuration_parameter_data[3];
   maximum_power_consumption |= (configuration_parameter_data[4] << 8);
@@ -6432,13 +6487,14 @@ ipmi_oem_dell_set_power_capacity (ipmi_oem_state_data_t *state_data)
 					   12,
 					   obj_cmd_rs) < 0)
     {
-      if (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
-	  && ((ipmi_check_completion_code (obj_cmd_rs,
-					   IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1)
-	      || (ipmi_check_completion_code (obj_cmd_rs,
-					      IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+      if ((ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_BAD_COMPLETION_CODE
+	   && ((ipmi_check_completion_code (obj_cmd_rs,
+					    IPMI_COMP_CODE_GET_SYSTEM_INFO_PARAMETERS_PARAMETER_NOT_SUPPORTED) == 1)
+	       || (ipmi_check_completion_code (obj_cmd_rs,
+					       IPMI_COMP_CODE_OEM_DELL_NOT_LICENSED) == 1)))
+	  || (ipmi_ctx_errnum (state_data->ipmi_ctx) == IPMI_ERR_COMMAND_INVALID_OR_UNSUPPORTED
+	      && ipmi_check_completion_code (obj_cmd_rs,
+					     IPMI_COMP_CODE_INVALID_DATA_FIELD_IN_REQUEST) == 1))
 	{
 	  pstdout_fprintf (state_data->pstate,
 			   stderr,

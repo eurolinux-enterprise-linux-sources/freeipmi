@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -228,7 +228,7 @@ _ipmi_i2c_smbus_access (ipmi_ssif_ctx_t ctx,
 {
   struct ipmi_i2c_smbus_ioctl_data args;
   fd_set read_fds;
-  struct timeval tv;
+  struct timeval tv, tv_orig, start, end, delta;
   int n, rv;
 
   assert (ctx);
@@ -242,15 +242,40 @@ _ipmi_i2c_smbus_access (ipmi_ssif_ctx_t ctx,
       tv.tv_sec = IPMI_SSIF_TIMEOUT;
       tv.tv_usec = 0;
 
-      if ((n = select (dev_fd + 1,
-                       &read_fds,
-                       NULL,
-                       NULL,
-                       &tv)) < 0)
-        {
-          SSIF_ERRNO_TO_SSIF_ERRNUM (ctx, errno);
-          return (-1);
-        }
+      tv_orig.tv_sec = tv.tv_sec;
+      tv_orig.tv_usec = tv.tv_usec;
+
+      if (gettimeofday (&start, NULL) < 0)
+	{
+	  SSIF_ERRNO_TO_SSIF_ERRNUM (ctx, errno);
+	  return (-1);
+	}
+
+      do {
+	if ((n = select (dev_fd + 1,
+			 &read_fds,
+			 NULL,
+			 NULL,
+			 &tv)) < 0)
+	  {
+	    if (errno != EINTR)
+	      {
+		SSIF_ERRNO_TO_SSIF_ERRNUM (ctx, errno);
+		return (-1);
+	      }
+
+	    if (gettimeofday (&end, NULL) < 0)
+	      {
+		SSIF_ERRNO_TO_SSIF_ERRNUM (ctx, errno);
+		return (-1);
+	      }
+
+	    /* delta = end - start */
+	    timersub (&end, &start, &delta);
+	    /* tv = tv_orig - delta */
+	    timersub (&tv_orig, &delta, &tv);
+	  }
+      } while (n < 0);
 
       if (!n)
         {
@@ -654,6 +679,8 @@ ipmi_ssif_ctx_set_flags (ipmi_ssif_ctx_t ctx, unsigned int flags)
 int
 ipmi_ssif_ctx_io_init (ipmi_ssif_ctx_t ctx)
 {
+  int flags;
+
   if (!ctx || ctx->magic != IPMI_SSIF_CTX_MAGIC)
     {
       ERR_TRACE (ipmi_ssif_ctx_errormsg (ctx), ipmi_ssif_ctx_errnum (ctx));
@@ -673,6 +700,19 @@ ipmi_ssif_ctx_io_init (ipmi_ssif_ctx_t ctx)
                               O_RDWR)) < 0)
     {
       SSIF_ERRNO_TO_SSIF_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+
+  flags = fcntl(ctx->device_fd, F_GETFD);
+  if (flags < 0)
+    {
+      SSIF_SET_ERRNUM (ctx, errno);
+      goto cleanup;
+    }
+  flags |= FD_CLOEXEC;
+  if (fcntl(ctx->device_fd, F_SETFD, flags) < 0)
+    {
+      SSIF_SET_ERRNUM (ctx, errno);
       goto cleanup;
     }
 

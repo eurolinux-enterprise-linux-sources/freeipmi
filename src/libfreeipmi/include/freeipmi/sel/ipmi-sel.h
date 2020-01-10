@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 FreeIPMI Core Team
+ * Copyright (C) 2003-2015 FreeIPMI Core Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,6 +54,7 @@ extern "C" {
 #define IPMI_SEL_FLAGS_ASSUME_SYTEM_EVENT_RECORDS           0x0002
 
 #define IPMI_SEL_PARAMETER_INTERPRET_CONTEXT                0x0001
+#define IPMI_SEL_PARAMETER_UTC_OFFSET                       0x0002
 
 #define IPMI_SEL_STRING_FLAGS_DEFAULT                       0x0000
 #define IPMI_SEL_STRING_FLAGS_VERBOSE                       0x0001
@@ -64,6 +65,14 @@ extern "C" {
 #define IPMI_SEL_STRING_FLAGS_NON_ABBREVIATED_UNITS         0x0020
 #define IPMI_SEL_STRING_FLAGS_ENTITY_SENSOR_NAMES           0x0040
 #define IPMI_SEL_STRING_FLAGS_INTERPRET_OEM_DATA            0x0100
+/* Timestamps are defined as localtime.  If there are UTC and
+ * one wishes to output in localtime, this flag will do so.
+ */
+#define IPMI_SEL_STRING_FLAGS_UTC_TO_LOCALTIME              0x0200
+/* Convert localtimes to UTC times, as it may be convenient
+ * for certain purposes.
+ */
+#define IPMI_SEL_STRING_FLAGS_LOCALTIME_TO_UTC              0x0400
 #define IPMI_SEL_STRING_FLAGS_LEGACY                        0x1000
 
 #define IPMI_SEL_RECORD_TYPE_CLASS_SYSTEM_EVENT_RECORD               0x0
@@ -115,11 +124,14 @@ int ipmi_sel_ctx_set_ipmi_version (ipmi_sel_ctx_t ctx,
  *
  * INTERPRET_CONTEXT - for use with %I - see below.  interpret_ctx
  * assumed loaded with whatever config desired for interpretation
+ *
+ * UTC_OFFSET - specific UTC offset to apply to timestamps (int)
  */
 int ipmi_sel_ctx_get_parameter (ipmi_sel_ctx_t ctx,
 				unsigned int parameter,
-				void **ptr);
+				void *ptr);
 
+/* Pass NULL as ptr for default value */
 int ipmi_sel_ctx_set_parameter (ipmi_sel_ctx_t ctx,
 				unsigned int parameter,
 				const void *ptr);
@@ -385,7 +397,7 @@ int ipmi_sel_parse_read_oem (ipmi_sel_ctx_t ctx,
  *
  * Available in SEL timestamped and non-timestamped OEM record types
  *
- * %o - oem data in hex
+ * %o - oem data in hex (or strings if interpreted OEM available)
  *
  * Available in all record types for certain manufacturers
  *
